@@ -1,0 +1,6 @@
+{"type": "FeatureCollection", "features": [
+ {"type": "Feature", "properties": {"ISO_A2": "BR", "ISO_A2_EH": "BR", "NAME": "Brazil"},
+  "geometry": {"type": "Polygon", "coordinates": [[[-60, -30], [-40, -30], [-40, 0], [-60, 0], [-60, -30]]]}},
+ {"type": "Feature", "properties": {"ISO_A2": "-99", "ISO_A2_EH": "US", "NAME": "United States of America"},
+  "geometry": {"type": "MultiPolygon", "coordinates": [[[[-100, 30], [-80, 30], [-80, 50], [-100, 50], [-100, 30]]]]}}
+]}
