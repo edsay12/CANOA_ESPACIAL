@@ -1,0 +1,13 @@
+requests
+pandas
+numpy
+shapely
+streamlit
+streamlit-folium
+folium
+python-telegram-bot[job-queue]
+mcp
+openai
+python-dotenv
+pytest
+ruff
