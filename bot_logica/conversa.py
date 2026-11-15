@@ -84,8 +84,8 @@ class Conversa:
             resposta += f"\n{t('aviso_preliminar', lang)}"
         return dividir(f"{resposta}\n{t('dados_fonte', lang)}")
 
-    def texto(self, chat_id, texto, lang):
-        if bloqueio := self._permitir(chat_id, lang):
+    def texto(self, chat_id, texto, lang, limite_verificado=False):
+        if not limite_verificado and (bloqueio := self._permitir(chat_id, lang)):
             return bloqueio
         fazenda = self.db.fazenda_por_chat(chat_id)
         if fazenda is None:
