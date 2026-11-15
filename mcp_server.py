@@ -1,13 +1,17 @@
-"""Servidor MCP: expõe as funções do núcleo como ferramentas para a LLM."""
+"""Servidor MCP protegido que expõe os contratos de ferramentas do motor."""
 
+import asyncio
 import hmac
-import inspect
+import json
 import os
-from functools import wraps
+from pathlib import Path
+from urllib.parse import urlsplit
 
 import uvicorn
+from dotenv import load_dotenv
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
+from mcp.types import CallToolResult, TextContent, Tool
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -16,30 +20,32 @@ from starlette.responses import JSONResponse
 from bot_logica.ferramentas import FERRAMENTAS, executar
 
 
-def _criar_wrapper(nome: str, funcao):
-    assinatura = inspect.signature(funcao)
+class ServidorFerramentas(MCPServer):
+    """Publica schemas existentes e encaminha argumentos ao despachante T5."""
 
-    @wraps(funcao)
-    def ferramenta_mcp(*args, **kwargs):
-        bound = assinatura.bind(*args, **kwargs)
-        bound.apply_defaults()
-        return executar(nome, dict(bound.arguments))
+    async def list_tools(self):
+        return [
+            Tool(
+                name=nome,
+                description=f"{spec['descricao_pt_en']['pt']} / {spec['descricao_pt_en']['en']}",
+                input_schema=spec["schema"],
+            )
+            for nome, spec in FERRAMENTAS.items()
+        ]
 
-    ferramenta_mcp.__signature__ = assinatura
-    return ferramenta_mcp
-
-
-def criar_servidor_mcp() -> MCPServer:
-    mcp = MCPServer(name="canoa-espacial")
-    for nome, spec in FERRAMENTAS.items():
-        desc_pt = spec["descricao_pt_en"]["pt"]
-        desc_en = spec["descricao_pt_en"]["en"]
-        mcp.add_tool(
-            _criar_wrapper(nome, spec["funcao"]),
-            name=nome,
-            description=f"{desc_pt} / {desc_en}",
+    async def call_tool(self, name, arguments, context=None):
+        resultado = await asyncio.to_thread(executar, name, arguments)
+        return CallToolResult(
+            content=[
+                TextContent(type="text", text=json.dumps(resultado, ensure_ascii=False))
+            ],
+            structured_content=resultado,
+            is_error="erro" in resultado,
         )
-    return mcp
+
+
+def criar_servidor_mcp():
+    return ServidorFerramentas(name="canoa-espacial")
 
 
 class _BearerTokenMiddleware(BaseHTTPMiddleware):
@@ -54,22 +60,56 @@ class _BearerTokenMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-def criar_app(token: str) -> Starlette:
+def _seguranca(url_publica, porta_local):
+    enderecos_locais = ["localhost", "127.0.0.1", "[::1]"]
+    hosts = enderecos_locais + [f"{host}:{porta_local}" for host in enderecos_locais]
+    origens = [f"http://{host}" for host in hosts]
+    if url_publica:
+        try:
+            url = urlsplit(url_publica)
+            if (
+                url.scheme != "https"
+                or not url.hostname
+                or url.username
+                or url.password
+            ):
+                raise ValueError("MCP_PUBLIC_URL deve ser uma URL HTTPS válida")
+            porta = url.port
+        except ValueError:
+            raise ValueError("MCP_PUBLIC_URL deve ser uma URL HTTPS válida") from None
+        hostname = f"[{url.hostname}]" if ":" in url.hostname else url.hostname
+        autoridade = f"{hostname}:{porta}" if porta is not None else hostname
+        hosts.append(autoridade)
+        origens.append(f"https://{autoridade}")
+        if porta == 443:
+            hosts.append(hostname)
+            origens.append(f"https://{hostname}")
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=hosts,
+        allowed_origins=origens,
+    )
+
+
+def criar_app(token: str, *, porta: int = 8000) -> Starlette:
     if not token:
         raise ValueError("MCP_TOKEN não pode ser vazio.")
     mcp = criar_servidor_mcp()
-    seguranca = TransportSecuritySettings(enable_dns_rebinding_protection=False)
-    app = mcp.streamable_http_app(transport_security=seguranca)
+    app = mcp.streamable_http_app(
+        transport_security=_seguranca(os.environ.get("MCP_PUBLIC_URL", "").strip(), porta)
+    )
     app.add_middleware(_BearerTokenMiddleware, token=token)
     return app
 
 
 def main() -> None:
+    load_dotenv(dotenv_path=Path(__file__).resolve().with_name(".env"))
     token = os.environ.get("MCP_TOKEN", "").strip()
     if not token:
         raise RuntimeError("Variável de ambiente MCP_TOKEN não configurada.")
-    porta = int(os.environ.get("MCP_PORT", "8000"))
-    uvicorn.run(criar_app(token), host="0.0.0.0", port=porta)
+    porta = int(os.environ.get("MCP_PORT") or "8000")
+    host = os.environ.get("MCP_HOST") or "127.0.0.1"
+    uvicorn.run(criar_app(token, porta=porta), host=host, port=porta)
 
 
 if __name__ == "__main__":

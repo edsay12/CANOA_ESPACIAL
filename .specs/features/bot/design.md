@@ -99,8 +99,9 @@ sequenceDiagram
 ### mcp_server
 - **Purpose**: Servidor MCP HTTP com token (BOT-09, BOT-11).
 - **Location**: `mcp_server.py`
-- **Interfaces**: `criar_app(token) -> Starlette` · `main()` (uvicorn, porta `MCP_PORT` padrão 8000, caminho `/mcp`)
+- **Interfaces**: `criar_app(token, porta=8000) -> Starlette` · `main()` (uvicorn, caminho `/mcp`). `main()` carrega o `.env` do projeto, com precedência para as variáveis do processo. Os valores padrão são `MCP_HOST=127.0.0.1` e `MCP_PORT=8000`.
 - **Dependencies**: `mcp.server.mcpserver.MCPServer`, `starlette`, `uvicorn`, `bot_logica.ferramentas`
+- **Transporte**: publica os schemas da T5 e encaminha ao despachante os argumentos recebidos. O SDK valida host e origem pelos endereços locais e pelo endereço configurado em `MCP_PUBLIC_URL`. Chamadas de servidor para servidor podem omitir `Origin` e devem enviar o token. [Especificação do MCP](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#security-warning).
 
 ### bot_logica.idioma
 - **Purpose**: `language_code` → pt/en/es e textos fixos do bot.
