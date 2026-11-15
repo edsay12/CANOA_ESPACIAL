@@ -218,8 +218,8 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-38 | P2: Alertas — 7 dias | Execute | Implementing |
 | BOT-39 | P2: Alertas — série recente | Execute | Verified |
 | BOT-40 | P2: Alertas — /testar_alerta | Execute | Verified |
-| BOT-41 | P2: Áudio — transcrever | Design | Pending |
-| BOT-42 | P2: Áudio — falha | Design | Pending |
+| BOT-41 | P2: Áudio — transcrever | Execute | Verified |
+| BOT-42 | P2: Áudio — falha | Execute | Verified |
 | BOT-43 | Edge: variáveis ausentes | Design | Pending |
 | BOT-44 | Edge: localização fora de terra | Execute | Verified |
 | BOT-45 | Edge: resposta > 4096 | Execute | Verified |
