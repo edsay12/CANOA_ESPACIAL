@@ -168,11 +168,12 @@ T3 → T13
 **Where**: `web/apresentacao.py` (modify)
 **Depends on**: T1
 **Reuses**: `web.i18n`
-**Requirement**: SITE-17, SITE-18, SITE-20
+**Requirement**: SITE-17, SITE-18, SITE-20, SITE-41
 
 **Done when**:
 
-- [ ] Gate quick passa; 3 testes novos
+- [ ] Card com `preliminar = true` mostra o aviso (SITE-41)
+- [ ] Gate quick passa; 4 testes novos
 
 **Tests**: unit
 **Gate**: quick
@@ -439,6 +440,9 @@ Proof: run app | test_app.py::test_valueerror_mostra_mensagem_no_controle PASSED
 
 **C40** - Erro do motor numa aba não impede as outras de funcionar (SITE-40, Edge 4)
 Proof: run app | test_app.py::test_aba_com_erro_nao_derruba_outras PASSED
+
+**C41** - Card de ranking ou plano com `preliminar = true` mostra "parâmetros genéricos da FAO, não calibrados para a região" no idioma escolhido (SITE-41, Edge 5)
+Proof: run web | test_apresentacao.py::test_aviso_preliminar PASSED
 
 ---
 

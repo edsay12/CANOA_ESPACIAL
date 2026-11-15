@@ -73,6 +73,7 @@ def ranking_safra(lat, lon, data_semeadura, prioridades=None, idioma="pt"):
             "nota_solo": c["nota_solo"],
             "retorno": _retorno(ctx, nome, sum(perdas.values()) / len(perdas)),
             "moeda": ctx["moeda"],
+            "preliminar": culturas.preliminar(c),
             "explicacao": textos.t(
                 "explicacao_safra", idioma,
                 depois=sum(quebra[a] for a in DEPOIS), n_depois=len(DEPOIS),
@@ -132,6 +133,7 @@ def planos_rotacao(lat, lon, historico, prioridades=None, idioma="pt", data_seme
             "retorno_ano": None if None in rets else sum(rets) / 3,
             "moeda": ctx["moeda"],
             "atual": plano == atual,
+            "preliminar": any(culturas.preliminar(todas[c]) for c in plano),
             "explicacao": None,
         })
     _notas(planos, pesos, "retorno_ano")

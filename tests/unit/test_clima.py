@@ -242,3 +242,11 @@ def test_temporada_incompleta_fora_das_medias(ponto):
     r = clima.clima_mudou(-17.8, -50.92, "pt")
     assert r["anos_sem_estacao"] == 1
     assert r["periodos"]["2010-2025"]["chuva_mm"] == pytest.approx(sum(b) / 15)
+
+
+def test_janela_marca_preliminar(janela, monkeypatch):
+    # fixture "Teste" não tem coluna validado: conta como não validada
+    assert clima.janela_plantio(-17.8, -50.92, "Teste")["preliminar"] is True
+    real = culturas.carregar
+    monkeypatch.setattr(culturas, "carregar", lambda path=None: {k: {**v, "validado": "true"} for k, v in real(path).items()})
+    assert clima.janela_plantio(-17.8, -50.92, "Teste")["preliminar"] is False

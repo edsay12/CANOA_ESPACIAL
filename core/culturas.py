@@ -15,5 +15,10 @@ def carregar(path=None):
     return {r["cultura"]: r for r in df.to_dict("records")}
 
 
+def preliminar(c):
+    """MOT-63: parâmetro não validado pela equipe (validado ausente ou diferente de true)."""
+    return str(c.get("validado")).lower() != "true"
+
+
 def completa(c):
     return all(c.get(k) is not None for k in CAMPOS_MODELO)
