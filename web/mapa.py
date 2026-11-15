@@ -9,7 +9,6 @@ from branca.element import MacroElement, Template
 
 from web.pontos import normalizar
 
-
 ATIVOS = Path(__file__).resolve().parents[1] / "assets" / "site-location"
 
 
@@ -28,10 +27,14 @@ class ArteMapa(MacroElement):
         const mobile = {{ this.mobile | tojson }};
         const arte = L.imageOverlay(desktop, limites).addTo(mapa);
         const elemento = mapa.getContainer();
+        const estilos = document.createElement("style");
+        estilos.textContent = "#map_div.farmbits-compacto {height: 238px !important;}";
+        document.head.append(estilos);
         const enquadrar = () => {
             const largura = elemento.clientWidth;
             if (!largura) return;
             const compacto = largura < 600;
+            elemento.classList.toggle("farmbits-compacto", compacto);
             elemento.style.background = "#deecf3";
             elemento.style.cursor = "crosshair";
             arte.setUrl(compacto ? mobile : desktop);

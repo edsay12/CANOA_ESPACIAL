@@ -1,7 +1,6 @@
 from pathlib import Path
 from xml.etree import ElementTree
 
-
 ATIVOS = Path(__file__).resolve().parents[2] / "assets" / "site-location"
 
 

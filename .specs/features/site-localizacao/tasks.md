@@ -1,7 +1,7 @@
 # Site — Onde fica sua terra? Tasks
 
 **Design**: [Design da primeira tela](design.md)  
-**Status**: Approved  
+**Status**: In Progress  
 **Approved**: 2026-11-15 - user: "Aprovo, pode começar a implementação"  
 **Branch**: `codex/feat/site-location`  
 **Build**: `.venv/Scripts/python.exe -m compileall -q core web app.py mcp_server.py bot.py; .venv/Scripts/python.exe -m ruff check .`  
@@ -114,9 +114,9 @@ T4 → T5
 
 **Done when**:
 
-- [ ] A abertura corresponde a `.specs/features/site-localizacao/captures/onde-fica-sua-terra-desktop.png` e `.specs/features/site-localizacao/captures/onde-fica-sua-terra-mobile.png`, com o desvio do botão registrado em AD-006.
-- [ ] O ponto escolhido é compartilhado entre o mapa e o painel, permanece na troca de idioma e o botão de clima continua desabilitado.
-- [ ] Gate full passa com pelo menos 30 testes.
+- [x] A abertura corresponde a `.specs/features/site-localizacao/captures/onde-fica-sua-terra-desktop.png` e `.specs/features/site-localizacao/captures/onde-fica-sua-terra-mobile.png`, com o desvio do botão registrado em AD-006.
+- [x] O ponto escolhido é compartilhado entre o mapa e o painel, permanece na troca de idioma e o botão de clima continua desabilitado.
+- [x] Gate full passa com pelo menos 30 testes.
 
 **Tests**: Integração em `tests/app/test_site_location.py`, com pelo menos quatro testes novos, e verificação em navegador.  
 **Gate**: Full  
@@ -164,7 +164,7 @@ Proof: run location | test_site_location.py::test_reselecting_point_reuses_conte
 
 **Settled mid-build:** none  
 **Dispatched:** none  
-**Walked:** none
+**Walked:** Abertura em Chrome a 1366 × 978 e 390 × 1035. Dois cliques no mapa mobile substituíram o marcador. Rio Verde exibiu suas coordenadas no desktop. English traduziu a tela com o marcador preservado. O botão de clima ficou desabilitado em ambos os tamanhos, antes e depois da seleção. Uma resposta controlada de dois segundos mostrou o indicador antes de exibir o contexto.
 
 ## Phase Execution Map
 
