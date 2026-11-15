@@ -54,7 +54,7 @@ Não há código de domínio existente — repositório recém-estruturado.
 | System | Integration Method |
 | ------ | ------------------ |
 | NASA POWER | GET `https://power.larc.nasa.gov/api/temporal/daily/point` (JSON), timeout 120 s |
-| SoilGrids v2.0 | GET `https://rest.isric.org/soilgrids/v2.0/properties/query` (JSON) |
+| SoilGrids v2.0 | GET `https://rest.isric.org/soilgrids/v2.0/properties/query` (JSON), timeout 10 s |
 | Natural Earth | Arquivo `data/paises.geojson` baixado uma vez, lido com `json` + `shapely` |
 | Site e MCP (features 2 e 3) | Importam as funções públicas de `core/` |
 
