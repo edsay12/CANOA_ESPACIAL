@@ -1,6 +1,6 @@
 # motor proofs
 
-**HEAD**: 59d5fd6
+**HEAD**: 21bd90b
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 67 pass, 0 fail
@@ -94,7 +94,7 @@ tests/unit/test_validacao.py::test_data_mmdd_invalida PASSED             [ 97%]
 tests/unit/test_validacao.py::test_pesos_invalidos PASSED                [ 98%]
 tests/unit/test_validacao.py::test_pesos_reescalados PASSED              [100%]
 
-============================== 78 passed in 2.28s ==============================
+============================== 78 passed in 2.18s ==============================
 ```
 
 `Run integ` - exit 0
@@ -114,5 +114,5 @@ tests/integracao/test_demo.py::test_planos_menos_de_10s[Ludhiana] PASSED [ 77%]
 tests/integracao/test_demo.py::test_planos_menos_de_10s[Ames] PASSED     [ 88%]
 tests/integracao/test_demo.py::test_rio_verde_milho_mais_arriscado_que_sorgo PASSED [100%]
 
-============================== 9 passed in 9.11s ===============================
+============================== 9 passed in 9.12s ===============================
 ```
