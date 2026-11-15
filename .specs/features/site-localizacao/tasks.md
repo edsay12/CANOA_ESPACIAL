@@ -152,7 +152,7 @@ Proof: run location | test_site_location.py::test_language_switch_translates_scr
 Proof: run location | test_site_location.py::test_wrapped_map_click_queries_normalized_longitude PASSED
 
 **C10** - A rejeição de um ponto fora de terra firme mostra a mensagem aprovada e o usuário pode escolher outro lugar (LOC-10, Edge 2).  
-Proof: run location | test_localizacao.py::test_off_land_point_displays_error_and_allows_new_location PASSED
+Proof: run location | test_site_location.py::test_off_land_map_click_allows_demo_selection PASSED
 
 **C11** - A indisponibilidade da fonte mostra a mensagem aprovada e uma nova tentativa pode obter o contexto (LOC-11, Edge 3).  
 Proof: run location | test_localizacao.py::test_source_failure_displays_error_and_allows_retry PASSED
@@ -163,8 +163,8 @@ Proof: run location | test_site_location.py::test_reselecting_point_reuses_conte
 ## Handoff
 
 **Settled mid-build:** none  
-**Dispatched:** none  
-**Walked:** Abertura em Chrome a 1366 × 978 e 390 × 1035. Dois cliques no mapa mobile substituíram o marcador. Rio Verde exibiu suas coordenadas no desktop. English traduziu a tela com o marcador preservado. O botão de clima ficou desabilitado em ambos os tamanhos, antes e depois da seleção. Uma resposta controlada de dois segundos mostrou o indicador antes de exibir o contexto.
+**Dispatched:** Verificador independente e revisão de telas (rodada 1), ambos em b13b9a4.  
+**Walked:** Abertura em Chrome a 1366 × 978 e 390 × 1035. Dois cliques no mapa mobile substituíram o marcador. Em desktop com resposta controlada, o navegador retornou (-10.8917197452, -50.7324840764) e (-0.8598726115, 33.8216560510). A tela mostrou -10.89, -50.73 e -0.86, 33.82 e desenhou um único marcador após cada clique. Rio Verde exibiu suas coordenadas no desktop. English traduziu a tela com o marcador preservado. O botão de clima ficou desabilitado em ambos os tamanhos, antes e depois da seleção. Uma resposta controlada de dois segundos mostrou o indicador antes de exibir o contexto.
 
 ## Phase Execution Map
 
