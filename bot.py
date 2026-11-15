@@ -1,10 +1,12 @@
 """Bot Telegram: conversa via Groq (Remote MCP), localização, fotos, áudio, alertas."""
 
-from datetime import date, timedelta
+import logging
 import os
+from datetime import date, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import numpy as np
@@ -12,7 +14,9 @@ import pandas as pd
 import requests
 
 from core import balanco, cache, culturas, power, solo
-from core.db import listar_alertas # ajuste para 'from core.db import listar_alertas' se db.py ficar dentro de core/
+from core.db import listar_alertas
+
+logger = logging.getLogger(__name__)
 
 GROQ_AUDIO_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 WHISPER_MODEL = "whisper-large-v3-turbo"
@@ -133,7 +137,9 @@ def verificar_alertas() -> list[dict]:
             serie = _baixar_power_recente(item["lat"], item["lon"], dias=50)
             s = solo.agua_disponivel(item["lat"], item["lon"])
             ks = _ks_atual(serie, cultura, s["cad_mm"], item["data_plantio"], item["lat"])
+        # Isola falhas de serviços externos ou cálculos para não interromper as demais inscrições.
         except Exception:
+            logger.exception("Falha ao verificar alerta para a cultura %s", nome_cultura)
             continue
 
         if ks is not None and ks < 0.7:

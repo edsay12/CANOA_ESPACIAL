@@ -11,8 +11,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Design**: `.specs/features/bot/design.md`
 **Status**: Approved
 **Approved**: 2026-11-14 - user: "aprovado"
-**Build**: `.venv/bin/python -m compileall -q core web bot_logica app.py mcp_server.py bot.py; .venv/bin/ruff check .`
-**Run bot**: `.venv/bin/python -m pytest -v tests/bot`
+**Build**: `python -m compileall -q core web bot_logica app.py mcp_server.py bot.py; python -m ruff check .`
+**Run bot**: `python -m pytest -v tests/bot`
 
 ---
 
@@ -22,21 +22,23 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 | Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
 | ---------- | ------------------ | -------------------- | ---------------- | ----------- |
-| Banco e clima recente (`core/db.py`, `core/recente.py`, `core/alertas.py`) | unit (SQLite em pasta temporária, rede simulada) | Caminho feliz + erro + concorrência entre processos | `tests/bot/test_<modulo>.py` | `.venv/bin/python -m pytest -v tests/bot` |
-| Regras do bot (`bot_logica/*.py`) | unit (LLM, motor, banco e Telegram falsos) | Todos os ramos; 1:1 com os ACs; edge cases | `tests/bot/test_<modulo>.py` | `.venv/bin/python -m pytest -v tests/bot` |
-| Servidor MCP (`mcp_server.py`) | integration (`starlette.testclient.TestClient`) | Listagem, chamada com token, 401 sem token | `tests/bot/test_mcp_server.py` | `.venv/bin/python -m pytest -v tests/bot` |
-| Ligação Telegram (`bot.py`) | unit (`verificar_ambiente`, `agendar` com JobQueue falso) | Ambiente e agendamento | `tests/bot/test_bot.py` | `.venv/bin/python -m pytest -v tests/bot` |
+| Banco e clima recente (`core/db.py`, `core/recente.py`, `core/alertas.py`) | unit (SQLite em pasta temporária, rede simulada) | Caminho feliz + erro + concorrência entre processos | `tests/bot/test_<modulo>.py` | `python -m pytest -v tests/bot` |
+| Regras do bot (`bot_logica/*.py`) | unit (LLM, motor, banco e Telegram falsos) | Todos os ramos; 1:1 com os ACs; edge cases | `tests/bot/test_<modulo>.py` | `python -m pytest -v tests/bot` |
+| Servidor MCP (`mcp_server.py`) | integration (`starlette.testclient.TestClient`) | Listagem, chamada com token, 401 sem token | `tests/bot/test_mcp_server.py` | `python -m pytest -v tests/bot` |
+| Ligação Telegram (`bot.py`) | unit (`verificar_ambiente`, `agendar` com JobQueue falso) | Ambiente e agendamento | `tests/bot/test_bot.py` | `python -m pytest -v tests/bot` |
 | `.env.example` | none | - (build gate only) | - | build gate only |
 
 ## Gate Check Commands
+
+Execute os comandos com o ambiente virtual do projeto ativado.
 
 > Generated from codebase - confirm before Execute.
 
 | Gate Level | When to Use | Command |
 | ---------- | ----------- | ------- |
-| Quick | Tarefas com testes | `.venv/bin/python -m pytest -v tests/bot` |
-| Full | Tarefa do servidor MCP | `.venv/bin/python -m pytest -v tests/bot` |
-| Build | Fim de fase e tarefas sem teste | `.venv/bin/python -m compileall -q core web bot_logica app.py mcp_server.py bot.py; .venv/bin/ruff check .; .venv/bin/python -m pytest -v tests/bot` |
+| Quick | Tarefas com testes | `python -m pytest -v tests/bot` |
+| Full | Tarefa do servidor MCP | `python -m pytest -v tests/bot` |
+| Build | Fim de fase e tarefas sem teste | `python -m compileall -q core web bot_logica app.py mcp_server.py bot.py; python -m ruff check .; python -m pytest -v tests/bot` |
 
 ---
 
@@ -117,19 +119,23 @@ T4 → T14
 
 ### T2: Banco compartilhado
 
+**Branch**: `feat/bot-banco-compartilhado-t2`
+**Ordem no roteiro**: implementar antes de T5 e T11.
+**Compatibilidade**: na primeira inicialização, o banco padrão importa as inscrições de `data/fieldshift.db` e preserva o arquivo original. O módulo também aceita bancos legados selecionados explicitamente por `DB_PATH`.
 **What**: `core/db.py` com o esquema do design e as funções de fazendas, observações e alertas; uma conexão por operação; caminho por `DB_PATH`.
-**Where**: `core/db.py`
+**Where**: `core/db.py`, `tests/bot/test_db.py`
 **Depends on**: None
 **Reuses**: `sqlite3`
 **Requirement**: BOT-01, BOT-02, BOT-03, BOT-04, BOT-05, BOT-06, BOT-07, BOT-08
 
 **Done when**:
 
-- [ ] Teste com 2 processos (`multiprocessing`) gravando no mesmo arquivo
-- [ ] Gate quick passa; 8 testes
+- [x] Teste com 2 processos (`multiprocessing`) gravando no mesmo arquivo
+- [x] Gate quick passa; 8 checks de aceite e 2 testes de compatibilidade
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
