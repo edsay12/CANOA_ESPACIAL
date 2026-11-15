@@ -6,3 +6,5 @@ __pycache__/
 db.sqlite
 data/fotos/*
 !data/fotos/.gitkeep
+
+data/*.db
