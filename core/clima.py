@@ -6,11 +6,14 @@ Contratos: clima_mudou(lat, lon, idioma) · janela_plantio(lat, lon, cultura) ·
 import numpy as np
 import pandas as pd
 
-from core import pais, power, textos
+from core import balanco, culturas, pais, power, solo, textos
 
 ANOS = range(1995, 2026)
 PERIODOS = {"1995-2009": range(1995, 2010), "2010-2025": range(2010, 2026)}
 MIN_ANOS_ESTACAO = 10
+ANOS_SAFRA = range(1995, 2025)
+DATAS_JANELA = [(m, d) for m in range(1, 13) for d in (1, 11, 21)]
+RISCO_SEGURO = 20
 SECO_MM, DIAS_VERANICO = 1.0, 10
 
 
@@ -135,3 +138,46 @@ def clima_mudou(lat, lon, idioma="pt"):
         "chuva_por_ano": chuva_por_ano,
         "fontes": ["NASA POWER"],
     }
+
+
+def _fim_seguro(datas):
+    """Última data da maior sequência de datas com risco < 20; o ano é circular (21/dez segue para 01/jan)."""
+    seguro = [d["risco_pct"] < RISCO_SEGURO for d in datas]
+    n = len(seguro)
+    if not any(seguro):
+        return None
+    if all(seguro):
+        return datas[-1]["data"]
+    inicio = seguro.index(False) + 1  # começa logo após uma data insegura para não partir uma sequência
+    melhor, fim, run = 0, None, 0
+    for k in range(inicio, inicio + n):
+        if seguro[k % n]:
+            run += 1
+            if run > melhor:
+                melhor, fim = run, datas[k % n]["data"]
+        else:
+            run = 0
+    return fim
+
+
+def janela_plantio(lat, lon, cultura):
+    """Risco de quebra semeando nos dias 01, 11 e 21 de cada mês, de 1995 a 2024, e a data-limite segura."""
+    c = culturas.carregar().get(cultura)
+    if c is None:
+        raise ValueError(f"cultura desconhecida: {cultura!r}")
+    if not culturas.completa(c):
+        raise ValueError(f"cultura sem parâmetros do modelo: {cultura!r}")
+    serie = power.serie(lat, lon)
+    s = solo.agua_disponivel(lat, lon)
+    tmin = serie.set_index("data")["tmin"]
+    datas = []
+    for mes, dia in DATAS_JANELA:
+        inicios = [pd.Timestamp(ano, mes, dia) for ano in ANOS_SAFRA]
+        if c.get("t_min_c") is not None:
+            frio = np.nanmean([tmin[i : i + pd.Timedelta(days=29)].mean() for i in inicios])
+            if frio < float(c["t_min_c"]):
+                datas.append({"data": f"{mes:02d}-{dia:02d}", "risco_pct": 100, "motivo": "frio"})
+                continue
+        quebras = sum(balanco.simular_safra(serie, c, s["cad_mm"], i, lat)["quebra"] for i in inicios)
+        datas.append({"data": f"{mes:02d}-{dia:02d}", "risco_pct": round(100 * quebras / len(inicios)), "motivo": None})
+    return {"cultura": cultura, "datas": datas, "fim_seguro": _fim_seguro(datas), "fontes": ["NASA POWER", s["fonte"]]}
