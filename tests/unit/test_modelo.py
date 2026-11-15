@@ -131,3 +131,113 @@ def test_formato_saida_ranking(ponto):
     assert len(r["itens"]) == 3 and all(set(i) == campos for i in r["itens"])
     assert {i["moeda"] for i in r["itens"]} == {"USD"}
     assert all(0 <= i["nota"] <= 100 for i in r["itens"])
+
+
+# --- planos de rotação ---
+
+
+@pytest.fixture
+def rotacao(ponto):
+    """Candidatas de rotação: A (nunca quebra), C (sempre quebra) e F (leguminosa); P é Principal (fora)."""
+    ponto["culturas"].update({
+        "C": cultura("C", nota_solo=3),
+        "F": cultura("F", familia="Fabaceae", fixa_n=True, nota_solo=5, papel="Cobertura"),
+        "G": cultura("G", familia="Asteraceae", nota_solo=4, papel="Inverno"),
+        "P": cultura("P", papel="Principal"),
+    })
+    ponto["ctx"]["culturas"] = ["A", "C", "P"]
+    ponto["ctx"]["produtividade"] = {n: {"produtividade_t_ha": 10.0, "preco_t": 100.0} for n in ("A", "C", "F", "G", "P")}
+    quebrar(ponto, "C", ANOS)
+    return ponto
+
+
+def plano(r, seq):
+    return next(p for p in r["itens"] if p["plano"] == list(seq))
+
+
+def test_planos_combinacoes_max_5(rotacao):
+    for n, fam in [("H", "Brassicaceae"), ("X", "Malvaceae"), ("Y", "Malvaceae")]:
+        rotacao["culturas"][n] = cultura(n, familia=fam, nota_solo=5, papel="Cobertura")
+    rotacao["culturas"]["A"]["nota_solo"] = 1
+    rotacao["culturas"]["G"]["nota_solo"] = 5
+    # 5 primeiras candidatas: A, B, F, G, H; X e Y passam do limite; P é Principal
+    rotacao["ctx"]["culturas"] = ["A", "P", "B", "F", "G", "H", "X", "Y"]
+    r = modelo.planos_rotacao(-17.8, -50.92, ["A", "A", "A"], {"solo": 1})
+    assert {c for c, _ in rotacao["chamadas"]} == {"A", "B", "F", "G", "H"}
+    # só solo: só F, G e H juntam 3 famílias, leguminosa e nota 5; qualquer plano com A ou B (nota 1) fica abaixo
+    melhores = [p for p in r["itens"] if not p["atual"]]
+    assert len(melhores) == 3
+    assert all(sorted(p["plano"]) == ["F", "G", "H"] for p in melhores)
+    assert len({tuple(p["plano"]) for p in melhores}) == 3
+
+
+def test_planos_janelas_3_anos(rotacao):
+    rotacao["ctx"]["culturas"] = ["A", "B"]
+    quebrar(rotacao, "A", [1995, 2024])
+    # janelas 1995–1997 … 2022–2024 (28) × 3 safras = 84; 1995 só cai na 1ª posição e 2024 só na 3ª
+    r = modelo.planos_rotacao(-17.8, -50.92, ["A", "B", "A"])
+    assert plano(r, "ABA")["risco_pct"] == round(100 * 2 / 84)
+    r = modelo.planos_rotacao(-17.8, -50.92, ["B", "A", "B"])
+    assert plano(r, "BAB")["risco_pct"] == 0
+    r = modelo.planos_rotacao(-17.8, -50.92, ["A", "A", "B"])
+    assert plano(r, "AAB")["risco_pct"] == round(100 * 1 / 84)
+    # cada (cultura, ano) é simulado uma vez só, de 1995 a 2024
+    anos = sorted(i.year for c, i in rotacao["chamadas"][:60])
+    assert anos == sorted(ANOS * 2)
+
+
+def test_planos_nota_solo(rotacao):
+    # A, C: Poaceae nota 3 (C) / 5 (A); F: Fabaceae leguminosa nota 5; G: Asteraceae nota 4
+    r = modelo.planos_rotacao(-17.8, -50.92, ["C", "C", "C"])
+    assert plano(r, "CCC")["nota_solo"] == pytest.approx((1 + 1 + 3) / 3, abs=0.01)
+    r = modelo.planos_rotacao(-17.8, -50.92, ["C", "F", "C"])
+    assert plano(r, "CFC")["nota_solo"] == pytest.approx((3 + 5 + 11 / 3) / 3, abs=0.01)
+    r = modelo.planos_rotacao(-17.8, -50.92, ["C", "F", "G"])
+    assert plano(r, "CFG")["nota_solo"] == pytest.approx((5 + 5 + 4) / 3, abs=0.01)
+
+
+def test_planos_inclui_atual(rotacao):
+    r = modelo.planos_rotacao(-17.8, -50.92, ["A", "C", "C", "C"])
+    atuais = [p for p in r["itens"] if p["atual"]]
+    assert len(atuais) == 1 and atuais[0]["plano"] == ["C", "C", "C"]
+    assert atuais[0]["risco_pct"] == 100
+    assert all(p["nota"] > atuais[0]["nota"] for p in r["itens"] if not p["atual"])
+    # atual com cultura fora das candidatas (Principal) também aparece
+    r = modelo.planos_rotacao(-17.8, -50.92, ["P", "P", "P"])
+    assert [p["plano"] for p in r["itens"] if p["atual"]] == [["P", "P", "P"]]
+
+
+def test_planos_top3_mais_atual(rotacao):
+    r = modelo.planos_rotacao(-17.8, -50.92, ["C", "C", "C"], {"seguranca": 1})
+    assert len(r["itens"]) == 4 and sum(p["atual"] for p in r["itens"]) == 1
+    # só segurança: AAA (risco 0) e depois os planos com um C (risco 33); CCC fica por último
+    assert [(p["risco_pct"], p["nota"]) for p in r["itens"]] == [(0, 100.0), (33, 67.0), (33, 67.0), (100, 0.0)]
+    assert r["itens"][0]["plano"] == ["A", "A", "A"]
+    assert set(r) == {"itens", "culturas_ignoradas", "fontes"}
+    assert r["fontes"] == ["NASA POWER", "SoilGrids", "FAOSTAT"]
+    campos = {"plano", "nota", "risco_pct", "nota_solo", "retorno_ano", "moeda", "atual", "explicacao"}
+    assert all(set(p) == campos for p in r["itens"])
+
+
+def test_planos_explicacao_vs_atual(rotacao):
+    # A rende 10 t × 100 sem perda = 1000/ano; C perde tudo = 0
+    r = modelo.planos_rotacao(-17.8, -50.92, ["C", "C", "C"], {"seguranca": 1}, "pt")
+    aaa = plano(r, "AAA")
+    assert aaa["retorno_ano"] == pytest.approx(1000)
+    assert aaa["explicacao"] == "-100 pontos de risco e +1000 USD/ano de retorno frente ao plano atual"
+    assert plano(r, "CCC")["explicacao"] is None
+    en = plano(modelo.planos_rotacao(-17.8, -50.92, ["C", "C", "C"], {"seguranca": 1}, "en"), "AAA")["explicacao"]
+    assert en == "-100 risk points and +1000 USD/year of return versus the current plan"
+    es = plano(modelo.planos_rotacao(-17.8, -50.92, ["C", "C", "C"], {"seguranca": 1}, "es"), "AAA")["explicacao"]
+    assert es.startswith("-100 puntos de riesgo y +1000 USD")
+    # sem retorno: só a diferença de risco
+    rotacao["ctx"]["produtividade"], rotacao["ctx"]["moeda"] = {}, None
+    r = modelo.planos_rotacao(-17.8, -50.92, ["C", "C", "C"], {"seguranca": 1}, "pt")
+    assert plano(r, "AAA")["explicacao"] == "-100 pontos de risco frente ao plano atual"
+
+
+def test_planos_historico_invalido(rotacao):
+    with pytest.raises(ValueError) as e:
+        modelo.planos_rotacao(-17.8, -50.92, ["A", "Xyz", "Abc"])
+    assert "Xyz" in str(e.value) and "Abc" in str(e.value) and "'A'" not in str(e.value)
+    assert rotacao["chamadas"] == []

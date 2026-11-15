@@ -430,10 +430,11 @@ T17 → T18
 
 **Done when**:
 
-- [ ] Gate quick passa; 7 testes novos (14 em `test_modelo.py`)
+- [x] Gate quick passa; 7 testes novos (14 em `test_modelo.py`)
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
