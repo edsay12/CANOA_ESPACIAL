@@ -316,11 +316,12 @@ T17 → T18
 
 **Done when**:
 
-- [ ] Testes com CSV de fixture
-- [ ] Gate quick passa; 2 testes
+- [x] Testes com CSV de fixture
+- [x] Gate quick passa; 2 testes
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
