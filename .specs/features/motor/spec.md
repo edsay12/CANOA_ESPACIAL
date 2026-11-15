@@ -47,6 +47,15 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | Data 02-29 (lacuna achada na T4) | `data_mmdd` rejeita 02-29 | A semeadura se repete em 1995–2024 e a maioria dos anos não é bissexta | n |
 | Chaves de `prioridades` (lacuna achada na T4) | `retorno`, `seguranca`, `solo`; ausente = 0; chave desconhecida → `ValueError` | Contrato não fixava os nomes | n |
 | SoilGrids sem valor (mar/cidade) | Mesmo fallback `cad_mm = 100`, `fonte = "padrão"`; fallback não vai para o cache | Evita gravar um padrão como se fosse dado | n |
+| Temporada incompleta (lacuna achada na T14) | Temporada que não termina até 2025-12-31 fica fora das médias (MOT-62) | user: "Descartar incompletas (Recommended)" | y |
+| Solo nos 4 pontos da demo (T18) | Integração aceita `fonte = "padrão"` enquanto o SoilGrids responde 503; com cache de solo o teste continua valendo | user: "Aceitar 'padrão' por ora (Recommended)" | y |
+| Início da estação (lacuna achada na T14) | A busca inclui a própria data de referência; o dia de início é o 1º dos 3 dias com ≥ 20 mm; "30 dias seguintes" contam após o dia de início | Spec não fixava os limites | n |
+| Fim da estação (lacuna achada na T14) | Acumulado de 10 dias = os 10 dias que terminam no dia avaliado | Spec não fixava a janela | n |
+| "Maior mudança" do resumo (lacuna achada na T14) | Variação relativa \|depois − antes\| / \|antes\| (antes = 0 vale 1); datas: deslocamento em dias / duração média da estação 1995–2009 | Torna grandezas diferentes comparáveis | n |
+| Janela segura que cruza o ano (lacuna achada na T15) | Datas circulares (21/dez → 01/jan é uma sequência); empate fica com a que começa antes; tudo seguro → fim "12-21" | Spec não tratava a virada | n |
+| Data de semeadura dos planos (lacuna achada na T17) | `data_semeadura` opcional; padrão 03-01 no hemisfério S e 09-01 no N | Spec não fixava | n |
+| `nota_solo` vazia (lacuna achada na T17) | Vazia vale 3 (50 pontos, neutro) | 15 de 20 culturas sem nota | n |
+| Risco e retorno do plano (lacuna achada na T17) | 28 janelas de 3 anos; `risco_pct` = 100 × quebras / 84; retorno = média das 3 culturas, None se faltar uma | Spec não fixava a agregação | n |
 
 **Open questions:** none - all resolved or logged above (required before the spec is confirmed).
 
@@ -96,6 +105,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 6. IF fewer than 10 of the 31 years have a season start THEN the system SHALL return `modo = "anual"` and compare calendar-year rainfall and days with tmax ≥ 35 °C instead of season values.
 7. The system SHALL return a one-sentence `resumo` in the requested `idioma` stating the largest change between the two periods.
 8. The system SHALL return `chuva_por_ano` as a list of `{ano, chuva_mm}` with the calendar-year rainfall total for every year from 1995 to 2025.
+9. IF a season does not end by 2025-12-31 THEN the system SHALL exclude it from the period means and count it in `anos_sem_estacao`.
 
 **Independent Test**: Rodar para os 4 pontos e ver valores diferentes e um resumo em pt, en e es.
 
@@ -285,8 +295,9 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | MOT-59 | Edge: NaN no POWER | Design | Pending |
 | MOT-60 | Edge: ciclo cruza o ano | Design | Pending |
 | MOT-61 | P1: Clima — chuva por ano (pedido pelo site, SITE-13) | Design | Pending |
+| MOT-62 | P1: Clima — temporada incompleta fora das médias | Design | Pending |
 
-**Coverage:** 61 total, 0 mapped to tasks, 60 unmapped ⚠️ (tasks come after approval)
+**Coverage:** 62 total, 0 mapped to tasks, 60 unmapped ⚠️ (tasks come after approval)
 
 ---
 

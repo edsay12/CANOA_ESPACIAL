@@ -231,3 +231,14 @@ def test_janela_sem_data_segura(janela):
     r = clima.janela_plantio(-17.8, -50.92, "Teste")
     assert r["fim_seguro"] is None
     assert {d["risco_pct"] for d in r["datas"]} == {20}
+
+
+def test_temporada_incompleta_fora_das_medias(ponto):
+    df = ponto["serie"]
+    b = [plantar(df, f"{ano}-10-15", f"{ano + 1}-03-31") for ano in range(2010, 2025)]
+    for ano in range(1995, 2010):
+        plantar(df, f"{ano}-10-15", f"{ano + 1}-03-31")
+    plantar(df, "2025-10-15", "2025-12-31")  # ainda chove no fim da série
+    r = clima.clima_mudou(-17.8, -50.92, "pt")
+    assert r["anos_sem_estacao"] == 1
+    assert r["periodos"]["2010-2025"]["chuva_mm"] == pytest.approx(sum(b) / 15)
