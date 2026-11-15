@@ -63,7 +63,7 @@ sequenceDiagram
 | System | Integration Method |
 | ------ | ------------------ |
 | Telegram | python-telegram-bot 22.8, polling; `JobQueue.run_daily` para alertas |
-| Groq | SDK `openai` 3.51 com `base_url="https://api.groq.com/openai/v1"`; Responses API com ferramenta `type: "mcp"` (beta) — campos exatos confirmados na T9 |
+| Groq | SDK `openai` 3.51 com `base_url="https://api.groq.com/openai/v1"`; Responses API com ferramenta `type: "mcp"` (beta) |
 | MCP | `mcp.server.mcpserver.MCPServer` (mcp 2.3) + `streamable_http_app()` (Starlette) + middleware de token + uvicorn |
 | Site | `core/db.py` (`criar_fazenda`, `listar_observacoes`) — SITE-32..36 |
 
@@ -116,6 +116,7 @@ sequenceDiagram
 - **Location**: `bot_logica/llm.py`
 - **Interfaces**: `prompt_sistema(fazenda, idioma) -> str` · `Memoria(n=6)` · `Assistente(cliente, modelo, mcp_url, mcp_token, remoto=True, ferramentas=FERRAMENTAS)` · `responder(chat_id, pergunta, fazenda, idioma) -> str` (levanta `LLMIndisponivel` em falha/timeout 30 s/limite)
 - **Dependencies**: cliente compatível com OpenAI (injetável)
+- **Remote MCP (T9)**: `tools` contém `type: "mcp"`, `server_label`, `server_description`, `server_url` (HTTPS), `headers.Authorization` com `Bearer <MCP_TOKEN>` e `require_approval: "never"`. O texto final vem de `response.output_text`. O histórico é enviado em `input` a cada chamada. [Documentação do Remote MCP](https://console.groq.com/docs/tool-use/remote-mcp) e [documentação da Responses API](https://console.groq.com/docs/responses-api).
 
 ### bot_logica.conversa
 - **Purpose**: Fluxos de texto, comandos e localização (BOT-15..18, BOT-21, BOT-33, BOT-34, BOT-40, BOT-44, BOT-45).
@@ -176,7 +177,7 @@ CREATE TABLE IF NOT EXISTS alertas (
 
 | Concern | Location (file:line) | Impact | Mitigation |
 | ------- | -------------------- | ------ | ---------- |
-| Campos do Remote MCP da Groq (beta) não confirmados | `bot_logica/llm.py` | Bot sem ferramentas | T9 começa conferindo a doc atual; plano B (T10) pronto e testado |
+| Compatibilidade do Remote MCP com o servidor publicado | `bot_logica/llm.py` | Bot sem ferramentas | T9 verifica o contrato documentado com cliente simulado. O teste com a Groq depende do endpoint publicado. Plano B previsto na T10. |
 | `mcp` 2.x renomeou `FastMCP` para `MCPServer`; guias do Notion citam FastMCP | `mcp_server.py` | Código de exemplo errado | Design usa `MCPServer`; avisar o Vinicius |
 | Alertas e ferramentas dependem do motor T10–T17 (pendente) | `core/alertas.py`, `bot_logica/ferramentas.py` | Bot real sem números | Testes com motor falso; integração real após o motor |
 | URL pública do MCP (ngrok) muda a cada reinício | `.env` | Groq perde o servidor | `MCP_PUBLIC_URL` no `.env`; verificação no deploy |
