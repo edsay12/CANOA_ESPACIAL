@@ -56,6 +56,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | Temporada incompleta (achado do Verifier) | Exige 30 dias de série depois do fim (MOT-62) | user: "30 dias de dados depois do fim (Recommended)" | y |
 | Histórico com cultura sem parâmetros (achado do Verifier) | Planos saem; o atual vem sem risco e com `sem_parametros = true` (MOT-65) | user: "Planos sem comparar (Recommended)" | y |
 | Leguminosa no plano (achado do Verifier) | `fixa_n` = true no CSV conta como leguminosa (MOT-45) | Coluna é true/false | n |
+| Mais culturas da FAO (2026-11-15) | Soja, Trigo, Feijão comum, Algodão, Girassol, Amendoim e Batata com FAO-56 Tab. 11/12/22 e Ky da FAO-66 Tab. 1; raiz = máximo da Tab. 22 (rodapé 1: sequeiro); `validado=false`. Arroz, Cevada, Colza, Grão-de-bico, Caupi e Milheto ficam incompletos (sem Ky ou sem dias na FAO) | user: "Vamos começar a corrigirem todos os pontos que vc comentou" | y |
 | Temporada incompleta (lacuna achada na T14) | Temporada que não termina até 2025-12-31 fica fora das médias (MOT-62) | user: "Descartar incompletas (Recommended)" | y |
 | Solo nos 4 pontos da demo (T18) | Integração aceita `fonte = "padrão"` enquanto o SoilGrids responde 503; com cache de solo o teste continua valendo | user: "Aceitar 'padrão' por ora (Recommended)" | y |
 | Início da estação (lacuna achada na T14) | A busca inclui a própria data de referência; o dia de início é o 1º dos 3 dias com ≥ 20 mm; "30 dias seguintes" contam após o dia de início | Spec não fixava os limites | n |
