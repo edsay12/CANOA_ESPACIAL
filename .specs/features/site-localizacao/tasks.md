@@ -80,8 +80,8 @@ T4 → T5
 
 **Done when**:
 
-- [ ] O mapa vazio renderiza a arte, um novo ponto substitui o marcador e o clique com longitude fora do intervalo é normalizado.
-- [ ] Gate quick passa com pelo menos 23 testes.
+- [x] O mapa vazio renderiza a arte, um novo ponto substitui o marcador e o clique com longitude fora do intervalo é normalizado.
+- [x] Gate quick passa com pelo menos 23 testes.
 
 **Tests**: Unit em `tests/web/test_mapa.py`, com pelo menos dois testes novos para coordenadas e marcador.  
 **Gate**: Quick  
