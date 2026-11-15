@@ -87,6 +87,9 @@ T14 → T15
 T10 → T15
 T8 → T15
 T14 → T19
+T16 → T20
+T17 → T20
+T15 → T20
 ```
 
 ### Phase 5: Ranking e planos
@@ -107,6 +110,7 @@ T15 → T18
 T16 → T18
 T17 → T18
 T19 → T18
+T20 → T18
 ```
 
 ---
@@ -459,11 +463,30 @@ T19 → T18
 
 ---
 
+### T20: Culturas FAO e marca `preliminar`
+
+**What**: Preencher em `data/culturas.csv` os dias de estágio de Milho e Sorgo granífero com a FAO-56 Tab. 11 (linha citada em `fonte`, `validado=false`) e marcar `preliminar` no ranking, nos planos e na janela de plantio (user: "Sim, os 3 passos (Recommended)").
+**Where**: `data/culturas.csv`, `core/culturas.py`, `core/modelo.py`, `core/clima.py`
+**Depends on**: T15, T16, T17
+**Reuses**: `culturas.completa`
+**Requirement**: MOT-63
+
+**Done when**:
+
+- [x] Milho e Sorgo granífero completos, `validado=false`, fonte com a linha da tabela
+- [x] Gate quick passa; 2 testes novos
+
+**Tests**: unit
+**Gate**: quick
+**Status**: ✅ Complete
+
+---
+
 ### T18: Integração nos 4 pontos da demo
 
 **What**: Testes com o cache versionado dos 4 pontos: tempo do ranking e dos planos, e o critério de sucesso de Rio Verde.
 **Where**: `tests/integracao/test_demo.py`
-**Depends on**: T15, T16, T17, T19
+**Depends on**: T15, T16, T17, T19, T20
 **Reuses**: `cache/` versionado, `data/paises.geojson`, `data/culturas.csv` validado
 **Requirement**: MOT-36, MOT-50
 
@@ -669,6 +692,9 @@ Proof: run unit | test_clima.py::test_chuva_por_ano PASSED
 **C62** - Uma temporada que não termina até 2025-12-31 fica fora das médias e conta em `anos_sem_estacao` (MOT-62, Clima AC 9)
 Proof: run unit | test_clima.py::test_temporada_incompleta_fora_das_medias PASSED
 
+**C63** - Resultado com cultura `validado` ≠ true sai com `preliminar = true`; com todas validadas, `false` (MOT-63, Edge 4)
+Proof: run unit | test_modelo.py::test_marca_preliminar_quando_nao_validada PASSED
+
 ---
 
 ## Handoff
@@ -691,7 +717,7 @@ Phase 2:  T7, T8, T9               (POWER, SoilGrids, país)
 Phase 3:  T10, T11, T12, T13       (balanço, FAOSTAT, adaptador, contexto)
 Phase 4:  T14, T15, T19            (clima mudou, janela, temporada incompleta)
 Phase 5:  T16, T17                 (ranking, planos)
-Phase 6:  T18                      (integração nos 4 pontos)
+Phase 6:  T20, T18                 (culturas FAO e preliminar, integração nos 4 pontos)
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism.

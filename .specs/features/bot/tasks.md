@@ -176,12 +176,13 @@ T4 → T14
 **Where**: `bot_logica/ferramentas.py`
 **Depends on**: T2
 **Reuses**: `core/*` (injetável), `core/culturas.py`
-**Requirement**: BOT-10, BOT-12, BOT-13, BOT-14
+**Requirement**: BOT-10, BOT-12, BOT-13, BOT-14, BOT-46
 
 **Done when**:
 
 - [ ] Motor falso nos testes
-- [ ] Gate quick passa; 4 testes
+- [ ] Resultado com `preliminar = true` ganha `aviso` (BOT-46)
+- [ ] Gate quick passa; 5 testes
 
 **Tests**: unit
 **Gate**: quick
@@ -483,6 +484,9 @@ Proof: run bot | test_conversa.py::test_localizacao_fora_de_terra PASSED
 
 **C45** - Resposta com mais de 4096 caracteres é dividida em várias mensagens (BOT-45, Edge 3)
 Proof: run bot | test_conversa.py::test_divide_mensagem_4096 PASSED
+
+**C46** - Resultado de ferramenta com item `preliminar = true` inclui `aviso` "parâmetros genéricos da FAO, não calibrados para a região" no idioma do usuário (BOT-46, Edge 4)
+Proof: run bot | test_ferramentas.py::test_aviso_preliminar PASSED
 
 ---
 

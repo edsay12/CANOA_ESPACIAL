@@ -182,4 +182,4 @@ def janela_plantio(lat, lon, cultura):
                 continue
         quebras = sum(balanco.simular_safra(serie, c, s["cad_mm"], i, lat)["quebra"] for i in inicios)
         datas.append({"data": f"{mes:02d}-{dia:02d}", "risco_pct": round(100 * quebras / len(inicios)), "motivo": None})
-    return {"cultura": cultura, "datas": datas, "fim_seguro": _fim_seguro(datas), "fontes": ["NASA POWER", s["fonte"]]}
+    return {"cultura": cultura, "preliminar": culturas.preliminar(c), "datas": datas, "fim_seguro": _fim_seguro(datas), "fontes": ["NASA POWER", s["fonte"]]}

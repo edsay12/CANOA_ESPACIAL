@@ -47,6 +47,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | Data 02-29 (lacuna achada na T4) | `data_mmdd` rejeita 02-29 | A semeadura se repete em 1995–2024 e a maioria dos anos não é bissexta | n |
 | Chaves de `prioridades` (lacuna achada na T4) | `retorno`, `seguranca`, `solo`; ausente = 0; chave desconhecida → `ValueError` | Contrato não fixava os nomes | n |
 | SoilGrids sem valor (mar/cidade) | Mesmo fallback `cad_mm = 100`, `fonte = "padrão"`; fallback não vai para o cache | Evita gravar um padrão como se fosse dado | n |
+| Culturas não validadas (bloqueio da T18) | Milho e Sorgo granífero recebem os dias de estágio da FAO-56 Tab. 11 (linha citada em `fonte`), `validado=false`; só o Matheus marca `true`; todo resultado com cultura não validada sai com `preliminar = true` (MOT-63) | user: "Sim, os 3 passos (Recommended)" | y |
 | Temporada incompleta (lacuna achada na T14) | Temporada que não termina até 2025-12-31 fica fora das médias (MOT-62) | user: "Descartar incompletas (Recommended)" | y |
 | Solo nos 4 pontos da demo (T18) | Integração aceita `fonte = "padrão"` enquanto o SoilGrids responde 503; com cache de solo o teste continua valendo | user: "Aceitar 'padrão' por ora (Recommended)" | y |
 | Início da estação (lacuna achada na T14) | A busca inclui a própria data de referência; o dia de início é o 1º dos 3 dias com ≥ 20 mm; "30 dias seguintes" contam após o dia de início | Spec não fixava os limites | n |
@@ -227,6 +228,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 - IF `idioma` is not "pt", "en" or "es" THEN the system SHALL produce texts in English.
 - IF a POWER day has NaN rain THEN the system SHALL treat it as 0 mm; IF it has NaN temperature THEN the system SHALL interpolate linearly from neighbouring days.
 - WHEN a crop cycle crosses 31 December THEN the system SHALL continue the simulation into the next calendar year.
+- IF a crop used in a result has `validado` different from true THEN the system SHALL set `preliminar = true` on that ranking item, rotation plan or planting-window result; otherwise `preliminar = false`.
 
 ---
 
@@ -296,8 +298,9 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | MOT-60 | Edge: ciclo cruza o ano | Design | Pending |
 | MOT-61 | P1: Clima — chuva por ano (pedido pelo site, SITE-13) | Design | Pending |
 | MOT-62 | P1: Clima — temporada incompleta fora das médias | Design | Pending |
+| MOT-63 | Edge: resultado com cultura não validada marcado `preliminar` | Design | Pending |
 
-**Coverage:** 62 total, 0 mapped to tasks, 60 unmapped ⚠️ (tasks come after approval)
+**Coverage:** 63 total, 0 mapped to tasks, 60 unmapped ⚠️ (tasks come after approval)
 
 ---
 

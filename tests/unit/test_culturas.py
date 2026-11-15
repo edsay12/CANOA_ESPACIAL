@@ -10,7 +10,8 @@ def test_carrega_csv_real_com_20_culturas():
     assert len(c) == 20
     assert {"Soja", "Milho"} <= set(c)
     assert c["Milho"]["kc_mid"] == 1.2
-    assert c["Milho"]["dias_ini"] is None
+    assert c["Milho"]["dias_ini"] == 20
+    assert c["Soja"]["dias_ini"] is None  # célula vazia vira None
 
 
 def test_carrega_csv_de_fixture():

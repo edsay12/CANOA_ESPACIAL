@@ -170,6 +170,7 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 - IF `MCP_TOKEN`, `GROQ_API_KEY` or `TELEGRAM_BOT_TOKEN` is missing at startup THEN the process SHALL exit with a message naming the missing variable.
 - IF the motor raises `ErroPontoInvalido` for a sent location THEN the bot SHALL reply "Esse ponto fica fora de terra firme. Mande outra localização." and keep the previous farm.
 - WHEN the model's reply exceeds 4096 characters THEN the bot SHALL split it into several Telegram messages.
+- IF a motor result returned by a tool contains an item with `preliminar = true` THEN the tool result SHALL include `aviso` with "parâmetros genéricos da FAO, não calibrados para a região" in the user's language.
 
 ---
 
@@ -222,8 +223,9 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-43 | Edge: variáveis ausentes | Design | Pending |
 | BOT-44 | Edge: localização fora de terra | Design | Pending |
 | BOT-45 | Edge: resposta > 4096 | Design | Pending |
+| BOT-46 | Edge: aviso de parâmetro preliminar (motor MOT-63) | Design | Pending |
 
-**Coverage:** 45 total, 0 mapped to tasks, 45 unmapped ⚠️ (tasks come after approval)
+**Coverage:** 46 total, 0 mapped to tasks, 45 unmapped ⚠️ (tasks come after approval)
 
 ---
 

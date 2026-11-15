@@ -174,6 +174,7 @@ O motor calcula o risco climático e os planos de rotação, mas o técnico, o p
 - WHEN the window is 390 px wide THEN the system SHALL show the cards stacked in one column with no horizontal page scroll.
 - IF the motor raises `ValueError` THEN the system SHALL show its message next to the control that caused it.
 - WHEN the motor is unavailable for a tab THEN the system SHALL keep the other tabs working.
+- IF a ranking item or rotation plan has `preliminar = true` THEN the system SHALL show on its card the notice "parâmetros genéricos da FAO, não calibrados para a região" in the selected language.
 
 ---
 
@@ -221,8 +222,9 @@ O motor calcula o risco climático e os planos de rotação, mas o técnico, o p
 | SITE-38 | Edge: 390 px | Design | Pending |
 | SITE-39 | Edge: ValueError no controle | Design | Pending |
 | SITE-40 | Edge: abas independentes | Design | Pending |
+| SITE-41 | Edge: aviso de parâmetro preliminar (motor MOT-63) | Design | Pending |
 
-**Coverage:** 40 total, 0 mapped to tasks, 40 unmapped ⚠️ (tasks come after approval)
+**Coverage:** 41 total, 0 mapped to tasks, 40 unmapped ⚠️ (tasks come after approval)
 
 ---
 

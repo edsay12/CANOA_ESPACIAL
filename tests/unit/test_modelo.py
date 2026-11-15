@@ -127,7 +127,7 @@ def test_formato_saida_ranking(ponto):
     assert set(r) == {"itens", "culturas_ignoradas", "fontes"}
     assert r["fontes"] == ["NASA POWER", "SoilGrids", "FAOSTAT"]
     assert r["culturas_ignoradas"] == []
-    campos = {"cultura", "nota", "risco_pct", "anos_quebra", "nota_solo", "retorno", "moeda", "explicacao"}
+    campos = {"cultura", "nota", "risco_pct", "anos_quebra", "nota_solo", "retorno", "moeda", "preliminar", "explicacao"}
     assert len(r["itens"]) == 3 and all(set(i) == campos for i in r["itens"])
     assert {i["moeda"] for i in r["itens"]} == {"USD"}
     assert all(0 <= i["nota"] <= 100 for i in r["itens"])
@@ -215,7 +215,7 @@ def test_planos_top3_mais_atual(rotacao):
     assert r["itens"][0]["plano"] == ["A", "A", "A"]
     assert set(r) == {"itens", "culturas_ignoradas", "fontes"}
     assert r["fontes"] == ["NASA POWER", "SoilGrids", "FAOSTAT"]
-    campos = {"plano", "nota", "risco_pct", "nota_solo", "retorno_ano", "moeda", "atual", "explicacao"}
+    campos = {"plano", "nota", "risco_pct", "nota_solo", "retorno_ano", "moeda", "atual", "preliminar", "explicacao"}
     assert all(set(p) == campos for p in r["itens"])
 
 
@@ -241,3 +241,14 @@ def test_planos_historico_invalido(rotacao):
         modelo.planos_rotacao(-17.8, -50.92, ["A", "Xyz", "Abc"])
     assert "Xyz" in str(e.value) and "Abc" in str(e.value) and "'A'" not in str(e.value)
     assert rotacao["chamadas"] == []
+
+
+def test_marca_preliminar_quando_nao_validada(rotacao):
+    for n in ("A", "F", "G"):
+        rotacao["culturas"][n]["validado"] = True
+    rotacao["culturas"]["C"]["validado"] = False
+    r = modelo.ranking_safra(-17.8, -50.92, "03-15")
+    assert {i["cultura"]: i["preliminar"] for i in r["itens"]} == {"A": False, "C": True, "P": True}  # P sem validado
+    p = modelo.planos_rotacao(-17.8, -50.92, ["A", "A", "A"])
+    assert all(i["preliminar"] == ("C" in i["plano"]) for i in p["itens"])
+    assert plano(p, ["A", "A", "A"])["preliminar"] is False
