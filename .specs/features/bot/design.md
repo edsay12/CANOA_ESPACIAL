@@ -134,7 +134,8 @@ sequenceDiagram
 ### bot_logica.audio
 - **Purpose**: Fluxo de voz (BOT-41, BOT-42).
 - **Location**: `bot_logica/audio.py`
-- **Interfaces**: `tratar_voz(chat_id, conteudo: bytes, lang) -> list[str]` com `transcrever(bytes)` injetado e reuso de `Conversa.texto`
+- **Interfaces**: `Audio(conversa, transcrever)` · `tratar_voz(chat_id, conteudo: bytes, lang, nome_arquivo=None) -> list[str]`. Uma transcrição válida passa uma vez por `Conversa.texto`, que aplica o limite por chat.
+- **Groq**: `TranscritorGroq(cliente, modelo)` envia o áudio em memória ao endpoint de transcrição. O modelo padrão é `whisper-large-v3-turbo`. O modelo detecta o idioma da fala e o idioma da interface segue para a conversa. [Documentação de transcrição da Groq](https://console.groq.com/docs/speech-to-text).
 
 ### bot
 - **Purpose**: Liga Telegram aos fluxos, agenda alertas e checa o ambiente (BOT-35, BOT-43).
