@@ -336,6 +336,7 @@ T4 → T14
 
 ### T13: Áudio
 
+**Branch**: `feat/bot-audio-t13`
 **What**: `bot_logica/audio.py` com `tratar_voz`: transcrever (Whisper da Groq, injetado) e repassar para `Conversa.texto`; falha ou vazio → mensagem.
 **Where**: `bot_logica/audio.py`
 **Depends on**: T11
@@ -344,10 +345,11 @@ T4 → T14
 
 **Done when**:
 
-- [ ] Gate quick passa; 2 testes
+- [x] Gate quick passa com C41–C42 e um teste que separa falhas da conversa de falhas da transcrição
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
