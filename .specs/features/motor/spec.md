@@ -48,6 +48,8 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | Chaves de `prioridades` (lacuna achada na T4) | `retorno`, `seguranca`, `solo`; ausente = 0; chave desconhecida → `ValueError` | Contrato não fixava os nomes | n |
 | SoilGrids sem valor (mar/cidade) | Mesmo fallback `cad_mm = 100`, `fonte = "padrão"`; fallback não vai para o cache | Evita gravar um padrão como se fosse dado | n |
 | Culturas não validadas (bloqueio da T18) | Milho e Sorgo granífero recebem os dias de estágio da FAO-56 Tab. 11 (linha citada em `fonte`), `validado=false`; só o Matheus marca `true`; todo resultado com cultura não validada sai com `preliminar = true` (MOT-63) | user: "Sim, os 3 passos (Recommended)" | y |
+| Data do critério de Rio Verde (T18) | 02-15 (era 03-15: em 03-15 milho e sorgo quebram em 29/30 anos, 97% × 97%; em 02-15, 87% × 70%) | user: "Mudar a data para 15/02 (Recommended)" | y |
+| Tempo limite do SoilGrids | 10 s (era 120 s: com o serviço fora, cada ranking esperava 166 s) | user: "Tempo limite de 10 s (Recommended)" | y |
 | Temporada incompleta (lacuna achada na T14) | Temporada que não termina até 2025-12-31 fica fora das médias (MOT-62) | user: "Descartar incompletas (Recommended)" | y |
 | Solo nos 4 pontos da demo (T18) | Integração aceita `fonte = "padrão"` enquanto o SoilGrids responde 503; com cache de solo o teste continua valendo | user: "Aceitar 'padrão' por ora (Recommended)" | y |
 | Início da estação (lacuna achada na T14) | A busca inclui a própria data de referência; o dia de início é o 1º dos 3 dias com ≥ 20 mm; "30 dias seguintes" contam após o dia de início | Spec não fixava os limites | n |
@@ -81,7 +83,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 7. The system SHALL write cache files atomically (temporary file then rename) so that two simultaneous calls never leave a partial file.
 8. IF latitude is outside [-90, 90] or longitude is outside [-180, 180] THEN the system SHALL raise `ValueError` before any network request.
 9. WHEN `solo.agua_disponivel(lat, lon)` is called THEN the system SHALL return `cad_mm`, `argila_pct`, `areia_pct` and `fonte = "SoilGrids"` from the 0–30 cm layers of SoilGrids v2.0, cached in `cache/solo_{lat:.2f}_{lon:.2f}.json`.
-10. IF the SoilGrids request fails and no cache file exists THEN the system SHALL return `cad_mm = 100`, `argila_pct = None`, `areia_pct = None` and `fonte = "padrão"`.
+10. IF the SoilGrids request fails or takes longer than 10 s and no cache file exists THEN the system SHALL return `cad_mm = 100`, `argila_pct = None`, `areia_pct = None` and `fonte = "padrão"`.
 11. WHEN `pais.de(lat, lon)` is called THEN the system SHALL return `iso2`, `nome` and `hemisferio` (`"S"` when lat < 0, otherwise `"N"`) using `data/paises.geojson` with no network request.
 12. IF the point lies inside no country polygon THEN the system SHALL return `iso2 = None` from `pais.de`.
 13. WHEN the motor sends a request to NASA POWER or SoilGrids THEN the system SHALL log at INFO level the source name, the point and the duration in seconds.
@@ -137,7 +139,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 15. The system SHALL return from `ranking_safra` a dict with `itens` (the ranked crops), `culturas_ignoradas` and `fontes`.
 16. WHILE the point's POWER and SoilGrids data are cached the system SHALL return `ranking_safra` in less than 5 s.
 
-**Independent Test**: Rodar para Rio Verde com semeadura em 03-15 e ver o milho com risco maior que o sorgo, com explicação.
+**Independent Test**: Rodar para Rio Verde com semeadura em 02-15 e ver o milho com risco maior que o sorgo, com explicação.
 
 ---
 
@@ -331,5 +333,5 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 ## Success Criteria
 
 - [ ] Os 4 pontos da demo produzem ranking, "clima mudou" e planos sem internet (cache versionado).
-- [ ] Rio Verde, semeadura 03-15: milho com `risco_pct` maior que sorgo.
+- [ ] Rio Verde, semeadura 02-15: milho com `risco_pct` maior que sorgo.
 - [ ] Nenhum número sai do motor sem `fontes` acompanhando.

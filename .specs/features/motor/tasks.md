@@ -494,13 +494,13 @@ T20 → T18
 
 **Done when**:
 
-- [ ] Rodam sem internet
-- [ ] Rio Verde, semeadura 03-15: milho com `risco_pct` maior que sorgo
-- [ ] Gate full passa; 3 testes
+- [x] Rodam sem internet
+- [x] Rio Verde, semeadura 02-15: milho com `risco_pct` maior que sorgo
+- [x] Gate full passa; 3 testes
 
 **Tests**: integration
 **Gate**: full
-**Status**: ❌ Blocked — nenhuma das 20 culturas de `data/culturas.csv` tem `dias_*` (0 completas: ranking e planos saem vazios nos 4 pontos); faltam também `cache/solo_*.json` dos 4 pontos e `data/faostat.csv`
+**Status**: ✅ Complete
 
 ---
 
@@ -533,7 +533,7 @@ Proof: run unit | test_power.py::test_ponto_invalido_sem_rede PASSED
 **C9** - `agua_disponivel` devolve `cad_mm`, `argila_pct`, `areia_pct`, `fonte="SoilGrids"` das camadas 0–30 cm e grava `cache/solo_...json` (MOT-09, AC 9)
 Proof: run unit | test_solo.py::test_soilgrids_0_30cm_e_cache PASSED
 
-**C10** - Falha do SoilGrids sem cache devolve `cad_mm=100`, argila/areia None, `fonte="padrão"` (MOT-10, AC 10)
+**C10** - Falha ou demora > 10 s do SoilGrids sem cache devolve `cad_mm=100`, argila/areia None, `fonte="padrão"` (MOT-10, AC 10)
 Proof: run unit | test_solo.py::test_falha_usa_padrao PASSED
 
 **C11** - `pais.de` devolve iso2, nome e hemisfério "S" para lat < 0 e "N" caso contrário, sem rede (MOT-11, AC 11)
