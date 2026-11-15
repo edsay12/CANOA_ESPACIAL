@@ -69,8 +69,9 @@ def test_falha_usa_padrao(pasta_cache, monkeypatch):
     padrao = {"cad_mm": 100, "argila_pct": None, "areia_pct": None, "fonte": "padrão"}
     nulos = resposta_soilgrids({k: None for k in solo.CAMADAS}, {k: None for k in solo.CAMADAS})
     for falha in [requests.Timeout("lento"), requests.ConnectionError("fora"), Resposta({}, status=500), Resposta(nulos)]:
-        rede(monkeypatch, falha)
+        chamadas = rede(monkeypatch, falha)
         assert solo.agua_disponivel(-0.3, 36.07) == padrao
+        assert chamadas[0]["timeout"] == 10  # demora > 10 s conta como falha
     assert list(pasta_cache.iterdir()) == []
 
 

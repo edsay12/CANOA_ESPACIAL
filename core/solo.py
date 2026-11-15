@@ -10,6 +10,7 @@ import requests
 
 from core import cache, validacao
 
+TIMEOUT_S = 10  # MOT-10: SoilGrids fora não pode travar o site
 URL = "https://rest.isric.org/soilgrids/v2.0/properties/query"
 CAMADAS = {"0-5cm": 5, "5-15cm": 10, "15-30cm": 15}
 PADRAO = {"cad_mm": 100, "argila_pct": None, "areia_pct": None, "fonte": "padrão"}
@@ -39,7 +40,7 @@ def _baixar(lat, lon):
     params += [("depth", d) for d in CAMADAS]
     inicio = time.monotonic()
     try:
-        r = requests.get(URL, params=params, timeout=120)
+        r = requests.get(URL, params=params, timeout=TIMEOUT_S)
         r.raise_for_status()
         camadas = {c["name"]: c for c in r.json()["properties"]["layers"]}
         argila, areia = _media_0_30(camadas["clay"]), _media_0_30(camadas["sand"])
