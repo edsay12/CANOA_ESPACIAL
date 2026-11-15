@@ -212,15 +212,15 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-32 | P2: Fotos — sem fazenda | Execute | Verified |
 | BOT-33 | P2: Alertas — inscrever | Execute | Verified |
 | BOT-34 | P2: Alertas — entrada inválida | Execute | Verified |
-| BOT-35 | P2: Alertas — 10:00 UTC | Design | Pending |
+| BOT-35 | P2: Alertas — 10:00 UTC | Execute | Verified |
 | BOT-36 | P2: Alertas — balanço desde o plantio | Execute | Verified |
-| BOT-37 | P2: Alertas — regra de envio | Execute | Implementing |
-| BOT-38 | P2: Alertas — 7 dias | Execute | Implementing |
+| BOT-37 | P2: Alertas — regra de envio | Execute | Verified |
+| BOT-38 | P2: Alertas — 7 dias | Execute | Verified |
 | BOT-39 | P2: Alertas — série recente | Execute | Verified |
 | BOT-40 | P2: Alertas — /testar_alerta | Execute | Verified |
 | BOT-41 | P2: Áudio — transcrever | Execute | Verified |
 | BOT-42 | P2: Áudio — falha | Execute | Verified |
-| BOT-43 | Edge: variáveis ausentes | Design | Pending |
+| BOT-43 | Edge: variáveis ausentes | Execute | Verified |
 | BOT-44 | Edge: localização fora de terra | Execute | Verified |
 | BOT-45 | Edge: resposta > 4096 | Execute | Verified |
 | BOT-46 | Edge: aviso de parâmetro preliminar (motor MOT-63) | Execute | Verified |
