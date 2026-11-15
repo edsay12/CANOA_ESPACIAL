@@ -235,11 +235,12 @@ T4 → T14
 
 **Done when**:
 
-- [ ] 20 permitidas, a 21ª negada, liberada após 60 min
-- [ ] Gate quick passa; 1 teste
+- [x] 20 permitidas, a 21ª negada, liberada após 60 min
+- [x] Gate quick passa; 1 teste
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
