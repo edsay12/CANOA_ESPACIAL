@@ -196,13 +196,13 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-16 | P1: Conversa — /start id | Design | Pending |
 | BOT-17 | P1: Conversa — id inválido | Design | Pending |
 | BOT-18 | P1: Conversa — localização | Design | Pending |
-| BOT-19 | P1: Conversa — pergunta via Groq + MCP | Design | Pending |
-| BOT-20 | P1: Conversa — prompt do sistema | Design | Pending |
+| BOT-19 | P1: Conversa — pergunta via Groq + MCP | Execute | Verified |
+| BOT-20 | P1: Conversa — prompt do sistema | Execute | Verified |
 | BOT-21 | P1: Conversa — sem fazenda | Design | Pending |
 | BOT-22 | P1: Conversa — idioma | Design | Pending |
-| BOT-23 | P1: Conversa — memória de 6 | Design | Pending |
+| BOT-23 | P1: Conversa — memória de 6 | Execute | Verified |
 | BOT-24 | P1: Conversa — limite 20/h | Design | Pending |
-| BOT-25 | P1: Conversa — falha da Groq | Design | Pending |
+| BOT-25 | P1: Conversa — falha da Groq | Execute | Verified |
 | BOT-26 | P1: Conversa — plano B local | Design | Pending |
 | BOT-27 | P2: Fotos — salvar | Design | Pending |
 | BOT-28 | P2: Fotos — descrever | Design | Pending |
