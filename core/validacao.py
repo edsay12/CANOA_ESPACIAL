@@ -1,5 +1,6 @@
 """Validação das entradas comuns do motor."""
 
+import math
 import re
 from datetime import date
 
@@ -33,6 +34,8 @@ def pesos(prioridades=None):
     if extras:
         raise ValueError(f"prioridades desconhecidas: {sorted(extras)}")
     p = {k: float(prioridades.get(k, 0)) for k in PESOS_PADRAO}
+    if not all(math.isfinite(v) for v in p.values()):
+        raise ValueError("prioridades precisam ser números finitos")
     if any(v < 0 for v in p.values()):
         raise ValueError("prioridades não podem ser negativas")
     total = sum(p.values())
