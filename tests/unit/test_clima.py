@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
-from core import clima, pais, power
+from core import balanco, clima, culturas, pais, power, solo
 
 DIA = pd.Timedelta(days=1)
 
@@ -159,3 +161,73 @@ def test_chuva_por_ano(ponto):
     r = clima.clima_mudou(-17.8, -50.92, "pt")["chuva_por_ano"]
     assert len(r) == 31
     assert r == [{"ano": a, "chuva_mm": float(a - 1900 + 100)} for a in range(1995, 2026)]
+
+
+FIXTURE_CULTURAS = Path(__file__).resolve().parent.parent / "fixtures" / "culturas.csv"
+DATAS_36 = [f"{m:02d}-{d:02d}" for m in range(1, 13) for d in (1, 11, 21)]
+
+
+@pytest.fixture
+def janela(ponto, monkeypatch):
+    """Ponto com simulação falsa: a data MM-DD quebra nos `quebras[MM-DD]` primeiros anos desde 1995."""
+    monkeypatch.setattr(culturas, "CSV", FIXTURE_CULTURAS)  # cultura "Teste": t_min_c = 10
+    monkeypatch.setattr(solo, "agua_disponivel", lambda lat, lon: {"cad_mm": 100, "argila_pct": None, "areia_pct": None, "fonte": "padrão"})
+    ponto["quebras"], ponto["anos"] = {}, set()
+
+    def falso(serie, cultura, cad_mm, inicio, lat):
+        ponto["anos"].add(inicio.year)
+        n = ponto["quebras"].get(inicio.strftime("%m-%d"), 0)
+        return {"perda": 0.0, "quebra": inicio.year - 1995 < n, "eta": 0.0, "etc": 0.0}
+
+    monkeypatch.setattr(balanco, "simular_safra", falso)
+    return ponto
+
+
+def test_janela_decendios(janela):
+    janela["quebras"] = {"03-11": 9, "07-21": 30, "12-01": 1}
+    r = clima.janela_plantio(-17.8, -50.92, "Teste")
+    assert [d["data"] for d in r["datas"]] == DATAS_36
+    risco = {d["data"]: d["risco_pct"] for d in r["datas"]}
+    assert (risco["03-11"], risco["07-21"], risco["12-01"], risco["01-01"]) == (30, 100, 3, 0)
+    assert janela["anos"] == set(range(1995, 2025))
+
+
+def test_janela_frio(janela, monkeypatch):
+    df = janela["serie"]
+    for ano in range(1995, 2026):
+        faixa(df, f"{ano}-06-01", f"{ano}-08-31", "tmin", 5.0)  # resto do ano: 18 °C
+    r = clima.janela_plantio(-17.8, -50.92, "Teste")
+    frio = [d["data"] for d in r["datas"] if d["motivo"] == "frio"]
+    # 21/mai: 11 dias a 18 °C e 19 a 5 °C -> 9,8 °C < 10; 21/ago: 11 a 5 °C e 19 a 18 °C -> 13,2 °C
+    assert frio == ["05-21", "06-01", "06-11", "06-21", "07-01", "07-11", "07-21", "08-01", "08-11"]
+    assert all(d["risco_pct"] == 100 for d in r["datas"] if d["motivo"] == "frio")
+    assert all(d["risco_pct"] == 0 and d["motivo"] is None for d in r["datas"] if d["data"] not in frio)
+    # sem t_min_c não há corte por frio
+    sem_t = {**culturas.carregar(FIXTURE_CULTURAS)["Teste"], "t_min_c": None}
+    monkeypatch.setattr(culturas, "carregar", lambda path=None: {"Teste": sem_t})
+    assert all(d["motivo"] is None and d["risco_pct"] == 0 for d in clima.janela_plantio(-17.8, -50.92, "Teste")["datas"])
+
+
+def test_janela_fim_seguro(janela):
+    # inseguras (≥ 20%) em todo o ano, exceto 01/mar–21/mai (9 datas) e 11/out–11/nov (4 datas)
+    q = {d: 15 for d in DATAS_36}
+    for d in ["03-01", "03-11", "03-21", "04-01", "04-11", "04-21", "05-01", "05-11", "05-21", "10-11", "10-21", "11-01", "11-11"]:
+        q[d] = 5  # 17%
+    janela["quebras"] = q
+    assert clima.janela_plantio(-17.8, -50.92, "Teste")["fim_seguro"] == "05-21"
+    # risco de exatamente 20% (6 de 30) não é seguro: sobra 01/mar–21/abr (6 datas), maior que a de outubro (4)
+    q["05-01"] = 6
+    assert clima.janela_plantio(-17.8, -50.92, "Teste")["fim_seguro"] == "04-21"
+    # sequência que cruza o ano (21/nov–21/jan, 7 datas) vence a de março–abril (6)
+    for d in ["11-21", "12-01", "12-11", "12-21", "01-01", "01-11", "01-21"]:
+        q[d] = 0
+    for d in ["10-11", "10-21", "11-01", "11-11"]:
+        q[d] = 15
+    assert clima.janela_plantio(-17.8, -50.92, "Teste")["fim_seguro"] == "01-21"
+
+
+def test_janela_sem_data_segura(janela):
+    janela["quebras"] = {d: 6 for d in DATAS_36}  # 20% em todas: nenhuma < 20
+    r = clima.janela_plantio(-17.8, -50.92, "Teste")
+    assert r["fim_seguro"] is None
+    assert {d["risco_pct"] for d in r["datas"]} == {20}
