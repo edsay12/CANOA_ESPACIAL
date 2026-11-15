@@ -254,21 +254,23 @@ T4 → T14
 
 ### T9: Assistente Groq com Remote MCP
 
+**Branch**: `feat/bot-groq-remote-mcp-t9`
 **What**: `bot_logica/llm.py`: `prompt_sistema`, `Memoria(6)`, `Assistente.responder` pela Responses API com ferramenta `mcp` (URL + cabeçalho do token), timeout 30 s, `LLMIndisponivel` em falha.
 **Where**: `bot_logica/llm.py`
 **Depends on**: T7
 **Reuses**: SDK `openai` com `base_url` da Groq
 **Requirement**: BOT-19, BOT-20, BOT-23, BOT-25
 
-**Primeiro passo**: conferir na doc atual da Groq (Remote MCP, beta) os nomes dos campos da ferramenta `mcp` e anotar no design.
+**Contrato**: campos do Remote MCP conferidos na documentação da Groq e registrados em `design.md`.
 
 **Done when**:
 
-- [ ] Cliente falso registra a requisição; testes conferem modelo, ferramenta `mcp`, URL, cabeçalho, prompt e memória
-- [ ] Gate quick passa; 4 testes
+- [x] Cliente falso registra a requisição; testes conferem modelo, ferramenta `mcp`, URL, cabeçalho, prompt e memória
+- [x] Gate quick passa; 4 testes da T9
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
