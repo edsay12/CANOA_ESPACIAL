@@ -105,15 +105,15 @@ def listar_observacoes():
                                                    "JOIN fazendas f ON f.id = o.fazenda_id")]
 
 
-def inscrever_alerta(fazenda_id, cultura, data_plantio):
+def inscrever_alerta(fazenda_id, cultura, data_plantio, idioma="pt"):
     with _conectar() as conn:
         f = conn.execute("SELECT chat_id, lat, lon FROM fazendas WHERE id = ?", (fazenda_id,)).fetchone()
         if f is None:
             raise ValueError("Fazenda não encontrada")
         # Os campos legados também permitem inserir em tabelas antigas com NOT NULL.
-        cur = conn.execute("INSERT INTO alertas (fazenda_id, chat_id, lat, lon, cultura, data_plantio, ativo) "
-                           "VALUES (?, ?, ?, ?, ?, ?, 1)",
-                           (fazenda_id, f["chat_id"] or "", f["lat"], f["lon"], cultura, data_plantio))
+        cur = conn.execute("INSERT INTO alertas (fazenda_id, chat_id, lat, lon, cultura, data_plantio, idioma, ativo) "
+                           "VALUES (?, ?, ?, ?, ?, ?, ?, 1)",
+                           (fazenda_id, f["chat_id"] or "", f["lat"], f["lon"], cultura, data_plantio, idioma))
         return cur.lastrowid
 
 
