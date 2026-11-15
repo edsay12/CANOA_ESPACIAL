@@ -219,3 +219,51 @@ def prioridades_vazias(
 ) -> bool:
     """Retorna True quando todas as prioridades estao zeradas (SITE-20)."""
     return float(retorno) <= 0 and float(seguranca) <= 0 and float(solo) <= 0
+
+def cards_planos(
+    resultado: dict[str, Any], idioma: str = "pt"
+) -> list[dict[str, Any]]:
+    """Formata os planos de rotacao colocando o plano atual primeiro (SITE-25)."""
+    itens = list(resultado.get("itens", []))
+    ordenados = [p for p in itens if p.get("atual")] + [
+        p for p in itens if not p.get("atual")
+    ]
+    cards: list[dict[str, Any]] = []
+    for idx, item in enumerate(ordenados, start=1):
+        atual = bool(item.get("atual"))
+        risco = item.get("risco_pct")
+        risco_txt = (
+            "—"
+            if risco is None
+            else t("risco_quebra", idioma, n=round(float(risco)))
+        )
+        nota = item.get("nota")
+        nota_solo = item.get("nota_solo")
+        cards.append(
+            {
+                "rotulo": (
+                    t("plano_atual", idioma) if atual else f"#{idx}"
+                ),
+                "atual": atual,
+                "culturas": [str(c) for c in item.get("plano", [])],
+                "nota": float(nota) if nota is not None else None,
+                "risco_txt": risco_txt,
+                "nota_solo": (
+                    float(nota_solo) if nota_solo is not None else None
+                ),
+                "retorno_txt": _fmt_retorno(
+                    item.get("retorno_ano"), item.get("moeda"), idioma
+                ),
+                "explicacao": (
+                    str(item["explicacao"])
+                    if item.get("explicacao")
+                    else None
+                ),
+                "aviso_preliminar": (
+                    t("aviso_preliminar", idioma)
+                    if item.get("preliminar")
+                    else None
+                ),
+            }
+        )
+    return cards
