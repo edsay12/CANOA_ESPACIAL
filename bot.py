@@ -24,10 +24,10 @@ from core import alertas, clima, contexto, db, modelo
 
 logger = logging.getLogger(__name__)
 
-GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_TTS_URL = "https://api.groq.com/openai/v1/audio/speech"
-CHAT_MODEL = "openai/gpt-oss-120b"
-TTS_MODEL = "canopylabs/orpheus-v1-english"
+DEFAULT_GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
+DEFAULT_GROQ_TTS_URL = "https://api.groq.com/openai/v1/audio/speech"
+DEFAULT_CHAT_MODEL = "openai/gpt-oss-120b"
+DEFAULT_TTS_MODEL = "canopylabs/orpheus-v1-english"
 
 
 def sintetizar_voz(texto: str) -> bytes:
@@ -39,13 +39,13 @@ def sintetizar_voz(texto: str) -> bytes:
     # Limita o tamanho para evitar erro de limite do modelo TTS
     texto_curto = texto.strip()[:190]
     resp = requests.post(
-        GROQ_TTS_URL,
+        os.environ.get("GROQ_TTS_URL") or DEFAULT_GROQ_TTS_URL,
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         },
         json={
-            "model": TTS_MODEL,
+            "model": os.environ.get("GROQ_MODEL_TTS") or DEFAULT_TTS_MODEL,
             "input": texto_curto,
             "voice": "troy",
             "response_format": "wav",
@@ -62,10 +62,10 @@ def _resumir_para_voz(resposta: str) -> str:
     if not api_key:
         raise RuntimeError("GROQ_API_KEY não configurada")
     resp = requests.post(
-        GROQ_CHAT_URL,
+        os.environ.get("GROQ_CHAT_URL") or DEFAULT_GROQ_CHAT_URL,
         headers={"Authorization": f"Bearer {api_key}"},
         json={
-            "model": os.environ.get("GROQ_MODEL_CHAT") or CHAT_MODEL,
+            "model": os.environ.get("GROQ_MODEL_CHAT") or DEFAULT_CHAT_MODEL,
             "messages": [
                 {
                     "role": "system",
@@ -273,7 +273,7 @@ def main():
     cliente = OpenAI(api_key=os.environ["GROQ_API_KEY"])
     assistente = Assistente(
         cliente,
-        os.environ.get("GROQ_MODEL_CHAT") or CHAT_MODEL,
+        os.environ.get("GROQ_MODEL_CHAT") or DEFAULT_CHAT_MODEL,
         os.environ["MCP_PUBLIC_URL"],
         os.environ["MCP_TOKEN"],
     )
