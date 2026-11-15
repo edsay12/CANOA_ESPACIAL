@@ -143,3 +143,55 @@ def test_foto_verifica_fazenda_e_envia_maior(monkeypatch, tmp_path):
     telegram.get_file.assert_awaited_once_with("maior")
     assert fotos[0][0:4] == ("1", b"maior", "legenda", "pt")
     msg.reply_text.assert_awaited_with("foto descrita")
+
+
+@pytest.mark.parametrize("modo", ["ausente", "vazio", "personalizado"])
+def test_configuracao_endpoints_e_modelos_voz(monkeypatch, modo):
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key")
+    nomes = ("GROQ_CHAT_URL", "GROQ_TTS_URL", "GROQ_MODEL_CHAT", "GROQ_MODEL_TTS")
+    personalizados = (
+        "https://example.test/chat",
+        "https://example.test/tts",
+        "modelo-chat",
+        "modelo-tts",
+    )
+    for nome, valor in zip(nomes, personalizados, strict=True):
+        if modo == "ausente":
+            monkeypatch.delenv(nome, raising=False)
+        else:
+            monkeypatch.setenv(nome, valor if modo == "personalizado" else "")
+    chamadas = []
+
+    class Resposta:
+        content = b"wav"
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"message": {"content": "resumo"}}]}
+
+    def post(url, **kwargs):
+        chamadas.append((url, kwargs))
+        return Resposta()
+
+    monkeypatch.setattr(bot.requests, "post", post)
+    assert bot._resumir_para_voz("resposta fundamentada") == "resumo"
+    assert bot.sintetizar_voz("spoken") == b"wav"
+    esperados = (
+        personalizados
+        if modo == "personalizado"
+        else (
+            "https://api.groq.com/openai/v1/chat/completions",
+            "https://api.groq.com/openai/v1/audio/speech",
+            "openai/gpt-oss-120b",
+            "canopylabs/orpheus-v1-english",
+        )
+    )
+    assert (
+        chamadas[0][0],
+        chamadas[1][0],
+        chamadas[0][1]["json"]["model"],
+        chamadas[1][1]["json"]["model"],
+    ) == esperados
+    assert chamadas[0][1]["json"]["messages"][1]["content"] == "resposta fundamentada"
