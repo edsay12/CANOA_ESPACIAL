@@ -216,7 +216,7 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-36 | P2: Alertas — balanço desde o plantio | Design | Pending |
 | BOT-37 | P2: Alertas — regra de envio | Design | Pending |
 | BOT-38 | P2: Alertas — 7 dias | Design | Pending |
-| BOT-39 | P2: Alertas — série recente | Design | Pending |
+| BOT-39 | P2: Alertas — série recente | Execute | Verified |
 | BOT-40 | P2: Alertas — /testar_alerta | Design | Pending |
 | BOT-41 | P2: Áudio — transcrever | Design | Pending |
 | BOT-42 | P2: Áudio — falha | Design | Pending |

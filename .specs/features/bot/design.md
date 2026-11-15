@@ -80,7 +80,7 @@ sequenceDiagram
 ### core.recente
 - **Purpose**: Últimos 45 dias do POWER com cache de 1 dia (BOT-39).
 - **Location**: `core/recente.py`
-- **Interfaces**: `serie(lat, lon, dias=45, hoje=None) -> DataFrame` (mesmas colunas de `power.serie`); cache `cache/recente_{lat:.2f}_{lon:.2f}_{AAAAMMDD}.json`
+- **Interfaces**: `serie(lat, lon, dias=45, hoje=None) -> DataFrame` com as mesmas colunas de `power.serie`. A janela inclui `hoje` e conserva datas com dados ausentes como `NaN`. O cache padrão usa `cache/recente_{lat:.2f}_{lon:.2f}_{AAAAMMDD}.json`. Janelas alternativas incluem o sufixo `_{dias}d` antes de `.json`.
 - **Dependencies**: `core.power` (conversão), `core.cache`, `requests`
 
 ### core.alertas
