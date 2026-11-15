@@ -128,7 +128,8 @@ sequenceDiagram
 ### bot_logica.fotos
 - **Purpose**: Fluxo de foto (BOT-27..32).
 - **Location**: `bot_logica/fotos.py`
-- **Interfaces**: `tratar_foto(chat_id, conteudo: bytes, legenda, lang, agora) -> list[str]` com `descrever(bytes, idioma)` injetado
+- **Interfaces**: `Fotos(db, descrever, alertas)` · `tratar_foto(chat_id, conteudo: bytes, legenda, lang, agora) -> list[str]` · `maior_foto(variantes)` para uso pelo handler da T14. `VisaoGroq(cliente, modelo)` implementa `descrever(bytes, idioma)` usando JPEG em base64. [Documentação de visão da Groq](https://console.groq.com/docs/vision).
+- **Persistência**: o nome usa timestamp UTC e criação exclusiva. Se a descrição ou o registro no SQLite falhar, o fluxo remove o arquivo da tentativa. A consulta hídrica ocorre após registrar a observação e informa quando os dados estão indisponíveis.
 
 ### bot_logica.audio
 - **Purpose**: Fluxo de voz (BOT-41, BOT-42).
