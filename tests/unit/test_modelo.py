@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from core import balanco, contexto, culturas, modelo, power, solo
+from core import balanco, clima, contexto, culturas, modelo, power, solo
 
 ANOS = list(range(1995, 2025))
 PARAMS = {"dias_ini": 20, "dias_des": 30, "dias_mid": 40, "dias_fim": 20, "kc_ini": 0.3, "kc_mid": 1.2,
@@ -33,9 +33,11 @@ def ponto(monkeypatch):
         },
         "perdas": {},
         "chamadas": [],
+        "clima": {"modo": "estacao", "periodos": {"2010-2025": {"inicio": "10-20"}}},
     }
     monkeypatch.setattr(culturas, "carregar", lambda path=None: estado["culturas"])
     monkeypatch.setattr(contexto, "contexto", lambda lat, lon: estado["ctx"])
+    monkeypatch.setattr(clima, "clima_mudou", lambda lat, lon, idioma="pt": estado["clima"])
     monkeypatch.setattr(power, "serie", lambda lat, lon: pd.DataFrame())
     monkeypatch.setattr(solo, "agua_disponivel", lambda lat, lon: {"cad_mm": 100, "argila_pct": None, "areia_pct": None, "fonte": "SoilGrids"})
 
@@ -215,7 +217,7 @@ def test_planos_top3_mais_atual(rotacao):
     assert r["itens"][0]["plano"] == ["A", "A", "A"]
     assert set(r) == {"itens", "culturas_ignoradas", "fontes"}
     assert r["fontes"] == ["NASA POWER", "SoilGrids", "FAOSTAT"]
-    campos = {"plano", "nota", "risco_pct", "nota_solo", "retorno_ano", "moeda", "atual", "preliminar", "explicacao"}
+    campos = {"plano", "nota", "risco_pct", "nota_solo", "retorno_ano", "moeda", "atual", "preliminar", "sem_parametros", "explicacao"}
     assert all(set(p) == campos for p in r["itens"])
 
 
@@ -252,3 +254,47 @@ def test_marca_preliminar_quando_nao_validada(rotacao):
     p = modelo.planos_rotacao(-17.8, -50.92, ["A", "A", "A"])
     assert all(i["preliminar"] == ("C" in i["plano"]) for i in p["itens"])
     assert plano(p, ["A", "A", "A"])["preliminar"] is False
+
+
+def test_planos_semeadura_padrao_inicio_das_chuvas(rotacao):
+    def datas():
+        return {i.strftime("%m-%d") for _, i in rotacao["chamadas"]}
+
+    modelo.planos_rotacao(-17.8, -50.92, ["A", "A", "A"])
+    assert datas() == {"10-20"}  # início médio 2010–2025
+    rotacao["chamadas"].clear()
+    modelo.planos_rotacao(-17.8, -50.92, ["A", "A", "A"], data_semeadura="02-15")
+    assert datas() == {"02-15"}  # o chamador manda
+    rotacao["clima"] = {"modo": "anual", "periodos": {"2010-2025": {}}}
+    for hemisferio, esperado in (("S", "11-01"), ("N", "05-01")):
+        rotacao["chamadas"].clear()
+        rotacao["ctx"]["pais"]["hemisferio"] = hemisferio
+        modelo.planos_rotacao(-17.8, -50.92, ["A", "A", "A"])
+        assert datas() == {esperado}
+
+
+def test_planos_historico_com_cultura_sem_parametros(rotacao):
+    rotacao["culturas"]["S"] = {**cultura("S", familia="Fabaceae", fixa_n=True, papel="Principal"), "dias_ini": None}
+    r = modelo.planos_rotacao(-17.8, -50.92, ["S", "A", "S"], {"seguranca": 1})
+    atual = [p for p in r["itens"] if p["atual"]]
+    assert len(atual) == 1 and atual[0]["plano"] == ["S", "A", "S"]
+    assert atual[0]["sem_parametros"] is True
+    assert (atual[0]["risco_pct"], atual[0]["nota"], atual[0]["retorno_ano"]) == (None, None, None)
+    assert "S" in r["culturas_ignoradas"]
+    sugeridos = [p for p in r["itens"] if not p["atual"]]
+    assert len(sugeridos) == 3 and all(not p["sem_parametros"] and p["risco_pct"] is not None for p in sugeridos)
+    assert plano(r, "AAA")["explicacao"] == "0% de risco de quebra; o plano atual não tem parâmetros para comparar"
+    assert all(c != "S" for c, _ in rotacao["chamadas"])  # nada simulado sem parâmetros
+
+
+def test_retorno_faostat(ponto):
+    # A: 10 t/ha × 100 USD/t; perda 1.0 em 6 dos 30 anos -> perda média 0,2 -> 10 × 0,8 × 100 = 800 USD
+    quebrar(ponto, "A", range(1995, 2001))
+    i = por_cultura(modelo.ranking_safra(-17.8, -50.92, "03-15"))["A"]
+    assert i["retorno"] == pytest.approx(800.0)
+    assert i["moeda"] == "USD"
+
+
+def test_sem_linha_retorno_none(ponto):
+    # C não tem linha de produtividade/preço no país
+    assert por_cultura(modelo.ranking_safra(-17.8, -50.92, "03-15"))["C"]["retorno"] is None
