@@ -45,8 +45,8 @@ def test_soilgrids_0_30cm_e_cache(pasta_cache, monkeypatch):
     assert r["fonte"] == "SoilGrids"
     assert r["argila_pct"] == pytest.approx(21.3, abs=0.05)
     assert r["areia_pct"] == pytest.approx(41.7, abs=0.05)
-    # spec-precision gap: a spec não fixa a fórmula; franco (~21% argila, ~42% areia) fica na faixa de solo médio
-    assert 100 < r["cad_mm"] < 200
+    # Saxton & Rawls (2006), MO 2,5% (Assumptions da spec): franco com 21,3% argila e 41,7% areia
+    assert r["cad_mm"] == pytest.approx(137.6, abs=0.1)
     p = chamadas[0]["params"]
     assert chamadas[0]["url"] == "https://rest.isric.org/soilgrids/v2.0/properties/query"
     assert {v for k, v in p if k == "depth"} == {"0-5cm", "5-15cm", "15-30cm"}

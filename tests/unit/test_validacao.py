@@ -24,6 +24,9 @@ def test_pesos_invalidos():
         validacao.pesos({"retorno": -0.1, "seguranca": 0.6, "solo": 0.5})
     with pytest.raises(ValueError):
         validacao.pesos({"retorno": 0, "seguranca": 0, "solo": 0})
+    for ruim in (float("nan"), float("inf")):
+        with pytest.raises(ValueError):
+            validacao.pesos({"retorno": ruim, "seguranca": 1})
 
 
 def test_pesos_reescalados():
