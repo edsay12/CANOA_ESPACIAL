@@ -19,17 +19,17 @@ COLUNAS = {"PRECTOTCORR": "chuva", "T2M_MAX": "tmax", "T2M_MIN": "tmin", "ALLSKY
 log = logging.getLogger(__name__)
 
 
-def _baixar(lat, lon):
+def _baixar(lat, lon, inicio="19950101", fim="20251231"):
     params = {
         "parameters": ",".join(COLUNAS),
         "community": "AG",
         "latitude": lat,
         "longitude": lon,
-        "start": "19950101",
-        "end": "20251231",
+        "start": inicio,
+        "end": fim,
         "format": "JSON",
     }
-    inicio = time.monotonic()
+    iniciado_em = time.monotonic()
     try:
         r = requests.get(URL, params=params, timeout=120)
         r.raise_for_status()
@@ -39,7 +39,7 @@ def _baixar(lat, lon):
     except (requests.RequestException, ValueError, KeyError, TypeError) as e:
         raise ErroFonteDados(f"NASA POWER indisponível para ({lat}, {lon}): {e}") from e
     finally:
-        log.info("NASA POWER (%.2f, %.2f) %.2f s", lat, lon, time.monotonic() - inicio)
+        log.info("NASA POWER (%.2f, %.2f) %.2f s", lat, lon, time.monotonic() - iniciado_em)
 
 
 def serie(lat, lon):
@@ -49,6 +49,10 @@ def serie(lat, lon):
     if dados is None:
         dados = _baixar(lat, lon)
         cache.gravar(path, dados)
+    return _converter(dados)
+
+
+def _converter(dados):
     p = dados["properties"]["parameter"]
     # cache antigo sem RH2M/WS2M/PS: coluna vazia, e o balanço usa Hargreaves nesses dias (MOT-22)
     df = pd.DataFrame({nome: p.get(chave, {}) for chave, nome in COLUNAS.items()}).sort_index()
