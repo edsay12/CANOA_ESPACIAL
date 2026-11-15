@@ -244,6 +244,29 @@ def test_protecao_host_origem_e_token(monkeypatch):
         )
 
 
+def test_stateless_json_transport_works_without_sse(monkeypatch):
+    monkeypatch.setenv("MCP_STATELESS_HTTP", "true")
+    monkeypatch.setenv("MCP_PUBLIC_URL", "https://mcp.example.test/mcp")
+    app = mcp_server.criar_app("token-teste-t6")
+    with TestClient(app, base_url="https://mcp.example.test") as client:
+        headers = _iniciar_sessao(client)
+        assert "mcp-session-id" not in headers
+        response = client.post(
+            "/mcp",
+            headers=headers,
+            json={
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/call",
+                "params": {"name": "info_cultura", "arguments": {"nome": "Milho"}},
+            },
+        )
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("application/json")
+        assert response.json()["result"]["structuredContent"]["familia"] == "Poaceae"
+        assert client.get("/mcp", headers=headers).status_code == 405
+
+
 def test_main_carrega_dotenv_e_respeita_ambiente(monkeypatch, tmp_path):
     env_file = tmp_path / ".env"
     env_file.write_text(
