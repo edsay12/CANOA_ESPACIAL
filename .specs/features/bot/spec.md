@@ -178,14 +178,14 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| BOT-01 | P1: Banco — criar fazenda | Design | Pending |
-| BOT-02 | P1: Banco — fazenda por chat | Design | Pending |
-| BOT-03 | P1: Banco — vincular chat | Design | Pending |
-| BOT-04 | P1: Banco — observações | Design | Pending |
-| BOT-05 | P1: Banco — alertas | Design | Pending |
-| BOT-06 | P1: Banco — cria tabelas | Design | Pending |
-| BOT-07 | P1: Banco — conexão por operação | Design | Pending |
-| BOT-08 | P1: Banco — dados só em db e fotos | Design | Pending |
+| BOT-01 | P1: Banco — criar fazenda | Execute | Verified |
+| BOT-02 | P1: Banco — fazenda por chat | Execute | Verified |
+| BOT-03 | P1: Banco — vincular chat | Execute | Verified |
+| BOT-04 | P1: Banco — observações | Execute | Verified |
+| BOT-05 | P1: Banco — alertas | Execute | Verified |
+| BOT-06 | P1: Banco — cria tabelas | Execute | Verified |
+| BOT-07 | P1: Banco — conexão por operação | Execute | Verified |
+| BOT-08 | P1: Banco — dados só em db e fotos | Execute | Verified |
 | BOT-09 | P1: MCP — 8 ferramentas | Design | Pending |
 | BOT-10 | P1: MCP — resultado do motor | Design | Pending |
 | BOT-11 | P1: MCP — token / 401 | Design | Pending |
