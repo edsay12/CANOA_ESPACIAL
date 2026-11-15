@@ -42,4 +42,11 @@
 - **Date**: 2026-11-15
 - **Status**: active
 
+### AD-006
+- **Decision**: O botão de clima permanece visível e desabilitado na primeira entrega do Site, inclusive após selecionar um local.
+- **Reason**: À pergunta “Na primeira entrega, o que deve acontecer ao clicar em ‘Ver o que mudou no meu clima’ depois de escolher um local?”, o usuário respondeu “Manter o botão desabilitado até a etapa de clima existir”.
+- **Scope**: Primeira entrega do Site, tela “Onde fica sua terra?”
+- **Date**: 2026-11-15
+- **Status**: active (AD-006)
+
 ## Handoff
