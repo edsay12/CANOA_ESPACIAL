@@ -1,0 +1,248 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@700&family=Inter:wght@400;600;700&display=swap");
+
+:root {
+    --fundo: #f6f2e9;
+    --superficie: #fff;
+    --superficie-2: #fbf8f1;
+    --linha: #ddd5c3;
+    --tinta: #1e2a23;
+    --tinta-suave: #5c6b61;
+    --verde: #1d6b43;
+    --verde-claro: #e3efe6;
+    --agua: #deecf3;
+    --margem: 32px;
+}
+
+[data-testid="stHeader"], [data-testid="stToolbar"] { display: none; }
+[data-testid="stAppViewContainer"] { background: var(--fundo); color: var(--tinta); }
+[data-testid="stMain"] { scrollbar-width: none; }
+[data-testid="stMainBlockContainer"] { max-width: none; padding: 0 0 40px; }
+[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] { gap: 0; }
+.so-mobile { display: none; }
+
+.st-key-cabecalho, .etapas, .st-key-cartao-local,
+.st-key-cabecalho input, .st-key-cartao-local button,
+.st-key-cartao-local button p {
+    font-family: Inter, Arial, sans-serif;
+}
+.marca strong, .etapas li span, .pergunta h1,
+:is(.st-key-ver-clima-desktop, .st-key-ver-clima-mobile) button p {
+    font-family: Archivo, Arial, sans-serif;
+}
+
+.st-key-cabecalho {
+    background: white;
+    border-bottom: 1px solid var(--linha);
+    min-height: 75px;
+    padding: 14px var(--margem);
+    flex-wrap: nowrap;
+}
+.marca, .pergunta, .exemplos-rotulo, .dica-mapa {
+    display: flex;
+    align-items: center;
+}
+.marca { gap: 14px; white-space: nowrap; }
+.marca strong { display: block; font-size: 22px; font-weight: 700; line-height: 1.1; }
+.marca .subtitulo { margin: 1px 0 0; font-size: 14px; line-height: 1.4; color: var(--tinta-suave); }
+.logo, .pin {
+    display: grid;
+    place-items: center;
+    flex: none;
+}
+.logo { width: 46px; height: 46px; border-radius: 13px; background: var(--verde); }
+.pin { width: 62px; height: 62px; border-radius: 17px; background: var(--verde-claro); }
+
+.st-key-idioma-site [role="group"] {
+    background: white;
+    border: 1px solid var(--linha);
+    border-radius: 999px;
+    min-height: 42px;
+    padding-inline: 14px 8px;
+}
+.st-key-idioma-site [role="group"]:focus-within {
+    outline: 2px solid var(--verde);
+    outline-offset: 2px;
+}
+.st-key-idioma-site [role="group"]::before {
+    content: "";
+    align-self: center;
+    flex: 0 0 24px;
+    height: 24px;
+    background: var(--globe) center no-repeat;
+}
+.st-key-idioma-site input {
+    color: var(--tinta);
+    font-size: 16px;
+    font-weight: 600;
+    padding-inline: 4px 0;
+}
+.st-key-idioma-site button {
+    width: 24px;
+    min-width: 24px;
+    background: var(--chevron) center no-repeat;
+}
+.st-key-idioma-site button svg { visibility: hidden; }
+
+.etapas {
+    display: grid;
+    grid-template-columns: minmax(0, 1.04fr) repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 10px var(--margem) !important;
+    list-style: none;
+    background: white;
+    border-bottom: 1px solid var(--linha);
+}
+.etapas li {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-height: 60px;
+    min-width: 0;
+    overflow: hidden;
+    padding: 11px 13px;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    background: var(--superficie-2);
+    color: var(--tinta);
+    line-height: 1.2;
+}
+.etapas li[aria-current="step"] { background: var(--verde-claro); border-color: var(--verde); }
+.etapas strong { font-size: 16px; white-space: nowrap; font-weight: 600; }
+.etapas li span {
+    display: grid;
+    place-items: center;
+    flex: 0 0 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--linha);
+    color: var(--tinta-suave);
+    font-size: 17px;
+    font-weight: 700;
+}
+.etapas li[aria-current="step"] span { background: var(--verde); color: white; }
+
+.st-key-cartao-local {
+    width: calc(100% - 2 * var(--margem));
+    margin: 24px var(--margem) 0;
+    padding: 22px 20px 22px 22px;
+    gap: 20px;
+    min-width: 0;
+    background: white;
+    border: 1px solid var(--linha);
+    border-radius: 18px;
+}
+.pergunta { gap: 16px; }
+.pergunta h1 { margin: 0; padding: 0; font-size: 29px; line-height: 1.15; color: var(--tinta); }
+.pergunta p { margin: 3px 0 0; line-height: 1.4; color: var(--tinta-suave); font-size: 17px; }
+
+.st-key-mapa-local { position: relative; gap: 0; }
+.st-key-mapa-local iframe {
+    display: block;
+    width: 100%;
+    height: 430px;
+    border: 1px solid var(--linha);
+    border-radius: 18px;
+    background: var(--agua);
+}
+.dica-mapa {
+    position: absolute;
+    bottom: 15px;
+    left: 16px;
+    z-index: 1;
+    gap: 10px;
+    width: max-content;
+    padding: 9px 18px;
+    border: 2px solid var(--verde);
+    border-radius: 999px;
+    background: white;
+    color: var(--tinta);
+    font-weight: 600;
+    pointer-events: none;
+}
+.dica-mapa i, .st-key-exemplos button::before {
+    display: block;
+    flex: none;
+    height: 13px;
+    width: 13px;
+    border-radius: 50%;
+    background: var(--verde);
+    content: "";
+}
+.st-key-escolher-local { gap: 13px; }
+.exemplos-rotulo { gap: 11px; font-size: 19px; line-height: 1.4; }
+.exemplos-rotulo strong { font-weight: 600; }
+.st-key-exemplos { gap: 12px; }
+.st-key-exemplos button {
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 54px;
+    padding: 10px 18px;
+    border: 2px solid var(--linha);
+    border-radius: 16px;
+    background: white;
+    color: var(--tinta);
+}
+.st-key-exemplos button[kind="primary"], .st-key-exemplos button:hover {
+    background: var(--verde);
+    border-color: var(--verde);
+    color: white;
+}
+.st-key-exemplos button[kind="primary"]::before, .st-key-exemplos button:hover::before {
+    background: white;
+}
+.st-key-exemplos button > div,
+:is(.st-key-ver-clima-desktop, .st-key-ver-clima-mobile) button > div {
+    flex: 0 1 auto;
+    width: auto;
+}
+.st-key-exemplos button p { font-size: 17px; font-weight: 600; line-height: 1.4; }
+
+.st-key-ver-clima-mobile { display: none; }
+:is(.st-key-ver-clima-desktop, .st-key-ver-clima-mobile) button:disabled {
+    display: flex;
+    gap: 14px;
+    min-height: 66px;
+    border: 0;
+    border-radius: 16px;
+    padding: 12px 24px;
+    background: var(--verde-claro);
+    color: var(--verde);
+    cursor: not-allowed;
+    opacity: 1;
+}
+:is(.st-key-ver-clima-desktop, .st-key-ver-clima-mobile) button p {
+    font-size: 22px;
+    font-weight: 700;
+}
+:is(.st-key-ver-clima-desktop, .st-key-ver-clima-mobile) button::after {
+    content: "";
+    width: 24px;
+    height: 24px;
+    background: var(--arrow) center no-repeat;
+    filter: brightness(0) saturate(100%) invert(31%) sepia(41%) saturate(800%) hue-rotate(94deg);
+}
+
+@media (max-width: 640px) {
+    :root { --margem: 16px; }
+    [data-testid="stMainBlockContainer"] { padding-bottom: 28px; }
+    .so-desktop, .marca .subtitulo, .st-key-ver-clima-desktop { display: none; }
+    .so-mobile, .st-key-ver-clima-mobile { display: block; }
+    .st-key-cabecalho { gap: 8px; padding-right: 4px; }
+    .st-key-idioma-site [role="group"] { padding-inline: 12px 6px; }
+    .etapas { gap: 6px; }
+    .etapas li { padding: 10px; align-items: flex-start; flex-direction: column; gap: 7px; }
+    .etapas strong { font-size: 13px; }
+    .etapas li span { flex: none; width: 34px; }
+    .st-key-cartao-local { margin-top: 18px; padding: 18px 16px 18px 18px; }
+    .pin { width: 52px; height: 52px; border-radius: 14px; }
+    .pergunta h1 { font-size: 24px; }
+    .pergunta p { font-size: 16px; }
+    .st-key-mapa-local { gap: 18px; }
+    .st-key-mapa-local iframe { height: 240px !important; }
+    .dica-mapa { position: static; width: 100%; justify-content: center; min-height: 56px; }
+    .exemplos-rotulo { font-size: 17px; }
+    .st-key-exemplos { flex-direction: column; gap: 10px; }
+    .st-key-exemplos > div { width: 100%; }
+    .st-key-exemplos button { width: 100%; }
+}

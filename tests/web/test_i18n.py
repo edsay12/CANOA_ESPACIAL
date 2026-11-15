@@ -24,3 +24,15 @@ def test_texto_limites():
     assert "pragas" in texto_pt and "doenças" in texto_pt
     assert "janela" in texto_pt and "clima" in texto_pt
     assert "irrigação" in texto_pt
+
+
+def test_textos_localizacao_seguem_os_frames():
+    assert i18n.t("titulo_local") == "Onde fica sua terra?"
+    assert i18n.t("instrucao_local") == "Toque no mapa, no lugar da sua propriedade."
+    assert i18n.t("instrucao_local_mobile") == "Toque no mapa."
+    assert i18n.t("dica_mapa") == "Toque em qualquer lugar do mapa"
+    assert i18n.t("exemplos_local") == "Ou escolha um lugar pronto"
+    assert i18n.t("ver_clima") == "Ver o que mudou no meu clima"
+    assert i18n.t("ver_clima_mobile") == "Ver meu clima"
+    assert i18n.t("titulo_local", "en") == "Where is your land?"
+    assert i18n.t("titulo_local", "es") == "¿Dónde está tu tierra?"
