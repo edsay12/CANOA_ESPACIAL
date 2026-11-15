@@ -16,6 +16,8 @@ DATAS_JANELA = [(m, d) for m in range(1, 13) for d in (1, 11, 21)]
 RISCO_SEGURO = 20
 SECO_MM, DIAS_VERANICO = 1.0, 10
 
+DIAS_CONFIRMA_FIM = 30
+
 
 def _referencia(ano, hemisferio):
     return pd.Timestamp(ano, 8 if hemisferio == "S" else 2, 1)
@@ -102,7 +104,7 @@ def clima_mudou(lat, lon, idioma="pt"):
         if e is None:
             continue
         ini, fim = e
-        if fim >= serie["data"].max():  # MOT-62: ainda chovia no último dia da série, estação incompleta
+        if (serie["data"].max() - fim).days < DIAS_CONFIRMA_FIM:  # MOT-62: sem 30 dias depois do fim, ela pode continuar
             continue
         s = serie[(serie["data"] >= ini) & (serie["data"] <= fim)]
         chuva = s["chuva"].fillna(0).to_numpy(float)
