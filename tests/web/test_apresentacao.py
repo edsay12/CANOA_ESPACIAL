@@ -5,6 +5,7 @@ from __future__ import annotations
 from web.apresentacao import (
     aviso_anos_sem_estacao,
     cards_clima,
+    cards_planos,
     cards_ranking,
     dados_grafico,
     prioridades_vazias,
@@ -187,3 +188,68 @@ def test_prioridades_vazias() -> None:
     """C20 (SITE-20): Detecta quando as 3 prioridades estao zeradas."""
     assert prioridades_vazias(0, 0, 0) is True
     assert prioridades_vazias(40, 0, 0) is False
+
+def test_cards_planos_atual_primeiro() -> None:
+    """C25 (SITE-25): O plano atual aparece primeiro com rotulo 'Seu plano atual'."""
+    dados = {
+        "itens": [
+            {
+                "plano": ["Soja", "Sorgo", "Milho"],
+                "nota": 78.0,
+                "risco_pct": 14,
+                "nota_solo": 4.0,
+                "retorno_ano": 1780.0,
+                "moeda": "BRL",
+                "atual": False,
+                "preliminar": False,
+                "explicacao": "Alterna leguminosa e graminea.",
+            },
+            {
+                "plano": ["Milho", "Milho", "Milho"],
+                "nota": 54.0,
+                "risco_pct": 31,
+                "nota_solo": 2.0,
+                "retorno_ano": 1420.0,
+                "moeda": "BRL",
+                "atual": True,
+                "preliminar": False,
+                "explicacao": None,
+            },
+        ]
+    }
+    cards = cards_planos(dados, idioma="pt")
+    assert cards[0]["atual"] is True
+    assert cards[0]["rotulo"] == "Seu plano atual"
+    assert cards[0]["culturas"] == ["Milho", "Milho", "Milho"]
+    assert cards[1]["atual"] is False
+    assert cards[1]["culturas"] == ["Soja", "Sorgo", "Milho"]
+
+
+def test_cards_planos_campos() -> None:
+    """C26 (SITE-26): Cada plano traz nota, risco, solo, retorno/sem dado e explicacao."""
+    dados = {
+        "itens": [
+            {
+                "plano": ["Soja", "Milho", "Feijão"],
+                "nota": 71.0,
+                "risco_pct": 18,
+                "nota_solo": 3.5,
+                "retorno_ano": None,
+                "moeda": "BRL",
+                "atual": False,
+                "preliminar": True,
+                "explicacao": "Bom para o solo; feijão sem preço municipal.",
+            }
+        ]
+    }
+    cards = cards_planos(dados, idioma="pt")
+    c = cards[0]
+    assert c["nota"] == 71.0
+    assert c["risco_txt"] == "Risco de quebra: 18%"
+    assert c["nota_solo"] == 3.5
+    assert c["retorno_txt"] == "Retorno: sem dado"
+    assert c["explicacao"] == "Bom para o solo; feijão sem preço municipal."
+    assert (
+        c["aviso_preliminar"]
+        == "parâmetros genéricos da FAO, não calibrados para a região"
+    )
