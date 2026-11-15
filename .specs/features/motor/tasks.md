@@ -456,6 +456,7 @@ T17 → T18
 
 **Tests**: integration
 **Gate**: full
+**Status**: ❌ Blocked — nenhuma das 20 culturas de `data/culturas.csv` tem `dias_*` (0 completas: ranking e planos saem vazios nos 4 pontos); faltam também `cache/solo_*.json` dos 4 pontos e `data/faostat.csv`
 
 ---
 
@@ -651,7 +652,7 @@ Proof: run unit | test_clima.py::test_chuva_por_ano PASSED
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** Execução por sub-agentes, 1 por lote — user: "Sub-agentes, 1 por lote (Recommended)". Exclusões pendentes viram um commit separado antes da T1 — user: "Commit só das exclusões (Recommended)". Comandos de build/teste usam `.venv/` (Python 3.14, sem pip global). Execução pausada após T9: especificar todas as features primeiro, depois o time implementa — user: "lembrando que vamos especificar primeiro e depois cada um do time vai especificar". MOT-61 (`chuva_por_ano`) acrescentado à spec, à T14 e ao check C61 — user: "faz isso mesmo Recomendo acrescentar à spec do motor um critério novo, MOT-61".
-**Dispatched:** batch worker 1 (Phases 1–2, T1–T9) at HEAD 47f6c1b — returned (T1–T9 done, 24 unit tests green, HEAD eac16a1) · execução retomada 2026-11-15 — user: "Vamos começar a implementar nossa parte a parte de EDVAN" · batch worker 2 (Phases 3–4, T10–T15) at HEAD dc9334a — returned (T10–T15 done, 54 unit tests green, HEAD = commit da T15) · batch worker 3 (Phases 5–6, T16–T18) at HEAD 05f6769 — sent
+**Dispatched:** batch worker 1 (Phases 1–2, T1–T9) at HEAD 47f6c1b — returned (T1–T9 done, 24 unit tests green, HEAD eac16a1) · execução retomada 2026-11-15 — user: "Vamos começar a implementar nossa parte a parte de EDVAN" · batch worker 2 (Phases 3–4, T10–T15) at HEAD dc9334a — returned (T10–T15 done, 54 unit tests green, HEAD = commit da T15) · batch worker 3 (Phases 5–6, T16–T18) at HEAD 05f6769 — returned (T16–T17 done, 68 unit tests green, HEAD 1ddf041; T18 blocked: culturas.csv sem `dias_*`, sem cache de solo e sem faostat.csv)
 **Walked:** none
 
 ---
