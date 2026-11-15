@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 6,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "weak_test::em testes de interface fixe os rotulos e as coordenadas esperadas dos locais de demonstracao",
+      "text": "Em testes de interface, fixe os rótulos e as coordenadas esperadas dos locais de demonstração.",
+      "signal": "weak_test",
+      "scope": "tests/web",
+      "status": "candidate",
+      "features": [
+        "site-localizacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C4 (tests/web)"
+      ],
+      "created": "2026-11-15T22:56:53Z",
+      "last_seen": "2026-11-15T22:56:53Z"
+    },
+    {
+      "id": "L-002",
+      "key": "weak_test::verifique o texto de cada selo de precisao com a resposta correspondente do motor",
+      "text": "Verifique o texto de cada selo de precisão com a resposta correspondente do motor.",
+      "signal": "weak_test",
+      "scope": "tests/web",
+      "status": "candidate",
+      "features": [
+        "site-localizacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C5 (tests/web)"
+      ],
+      "created": "2026-11-15T22:56:53Z",
+      "last_seen": "2026-11-15T22:56:53Z"
+    },
+    {
+      "id": "L-003",
+      "key": "weak_test::ao testar a troca de idioma confira os textos fixos de cada largura e o estado preservado",
+      "text": "Ao testar a troca de idioma, confira os textos fixos de cada largura e o estado preservado.",
+      "signal": "weak_test",
+      "scope": "tests/web",
+      "status": "candidate",
+      "features": [
+        "site-localizacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C8 (tests/web)"
+      ],
+      "created": "2026-11-15T22:56:53Z",
+      "last_seen": "2026-11-15T22:56:53Z"
+    },
+    {
+      "id": "L-004",
+      "key": "weak_test::em testes de recuperacao de uma selecao invalida use o controle que permite escolher outro ponto",
+      "text": "Em testes de recuperação de uma seleção inválida, use o controle que permite escolher outro ponto.",
+      "signal": "weak_test",
+      "scope": "tests/web",
+      "status": "candidate",
+      "features": [
+        "site-localizacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C10 (tests/web)"
+      ],
+      "created": "2026-11-15T22:56:53Z",
+      "last_seen": "2026-11-15T22:56:53Z"
+    },
+    {
+      "id": "L-005",
+      "key": "weak_test::teste o cache de localizacao com coordenadas brutas diferentes que normalizam para o mesmo ponto",
+      "text": "Teste o cache de localização com coordenadas brutas diferentes que normalizam para o mesmo ponto.",
+      "signal": "weak_test",
+      "scope": "tests/web",
+      "status": "candidate",
+      "features": [
+        "site-localizacao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C12 (tests/web)"
+      ],
+      "created": "2026-11-15T22:56:53Z",
+      "last_seen": "2026-11-15T22:56:53Z"
+    }
+  ]
+}
