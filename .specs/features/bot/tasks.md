@@ -297,6 +297,7 @@ T4 → T14
 
 ### T11: Conversa: start, localização, texto e alertas
 
+**Branch**: `feat/bot-conversa-alertas-t11`
 **What**: `bot_logica/conversa.py` com `start` (com e sem id), `localizacao`, `texto`, `alerta`, `testar_alerta`, `dividir`; limite, sem fazenda e fora de terra.
 **Where**: `bot_logica/conversa.py`
 **Depends on**: T2, T4, T7, T8, T9
@@ -305,11 +306,12 @@ T4 → T14
 
 **Done when**:
 
-- [ ] Banco em pasta temporária; motor e assistente falsos
-- [ ] Gate quick passa; 10 testes
+- [x] Banco em pasta temporária; motor e assistente falsos
+- [x] Gate quick passa com 10 checks de aceite e 5 testes adicionais de limite, localização, ranking e alertas
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
