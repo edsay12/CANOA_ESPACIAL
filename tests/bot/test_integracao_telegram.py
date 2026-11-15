@@ -7,9 +7,12 @@ import requests
 from pytest import raises
 
 import bot
+from bot_logica.audio import Audio
+from bot_logica.conversa import Conversa
 from bot_logica.idioma import t
+from bot_logica.limite import Limite
 from bot_logica.llm import LLMIndisponivel
-from core import db, pais
+from core import alertas, culturas, db
 
 
 def executar(corrotina):
@@ -25,15 +28,11 @@ def ambiente(monkeypatch, tmp_path):
         raise AssertionError("rede não simulada")
 
     monkeypatch.setattr(requests, "post", rede_proibida)
-    monkeypatch.setattr(pais, "de", lambda lat, lon: {"iso2": "BR"})
 
     async def thread(funcao, *args, **kwargs):
         return funcao(*args, **kwargs)
 
     monkeypatch.setattr(asyncio, "to_thread", thread)
-    monkeypatch.setattr(
-        bot, "limite_mensagens", SimpleNamespace(permitir=lambda chat_id: True)
-    )
     resposta = SimpleNamespace(
         reply_text=AsyncMock(),
         reply_audio=AsyncMock(),
@@ -41,6 +40,8 @@ def ambiente(monkeypatch, tmp_path):
         location=None,
         voice=None,
         audio=None,
+        photo=[],
+        caption=None,
     )
     update = SimpleNamespace(
         message=resposta,
@@ -48,8 +49,25 @@ def ambiente(monkeypatch, tmp_path):
         effective_user=SimpleNamespace(language_code="es"),
     )
     assistente = SimpleNamespace(responder=lambda *args: "Resultado com fonte NASA")
+    limite = Limite(maximo=100)
+    motor = SimpleNamespace(
+        contexto=lambda lat, lon: {"pais": {"iso2": "BR"}},
+        clima_mudou=lambda *args, **kwargs: {"resumo": "clima"},
+        ranking_safra=lambda *args, **kwargs: {
+            "itens": [{"cultura": "Soja", "risco_pct": 10}]
+        },
+    )
+    conversa = Conversa(db, motor, assistente, limite, alertas)
+    audio = Audio(conversa, lambda conteudo, **kwargs: "Pergunta transcrita")
     context = SimpleNamespace(
-        application=SimpleNamespace(bot_data={"assistente": assistente}),
+        application=SimpleNamespace(
+            bot_data={
+                "assistente": assistente,
+                "conversa": conversa,
+                "limite": limite,
+                "audio": audio,
+            }
+        ),
         user_data={},
         args=[],
         bot=None,
@@ -96,9 +114,10 @@ def test_audio_transcrito_usa_assistente_reutilizado(ambiente, monkeypatch):
         chamadas.append(args) or "Resposta NASA"
     )
     update.message.voice = SimpleNamespace(file_id="a")
-    arquivo = SimpleNamespace(download_to_drive=AsyncMock())
+    arquivo = SimpleNamespace(
+        download_as_bytearray=AsyncMock(return_value=bytearray(b"ogg"))
+    )
     context.bot = SimpleNamespace(get_file=AsyncMock(return_value=arquivo))
-    monkeypatch.setattr(bot, "transcrever", lambda caminho, lang: "Pergunta transcrita")
     falado = []
     resumido = []
     monkeypatch.setattr(
@@ -131,7 +150,7 @@ def test_falhas_localizadas_e_audio(ambiente, monkeypatch):
     assert update.message.reply_text.await_args_list[-1].args[0] == t(
         "llm_indisponivel", "es"
     )
-    context.application.bot_data.clear()
+    context.application.bot_data["conversa"].assistente = None
     executar(bot.on_text(update, context))
     assert update.message.reply_text.await_args_list[-1].args[0] == t(
         "llm_indisponivel", "es"
@@ -176,11 +195,7 @@ def test_alerta_usa_fazenda_idioma_e_valida_cultura(ambiente):
             "alerta_formato",
             "es",
             culturas=", ".join(
-                [
-                    k
-                    for k, v in bot.culturas.carregar().items()
-                    if bot.culturas.completa(v)
-                ][:8]
+                [k for k, v in culturas.carregar().items() if culturas.completa(v)]
             ),
         )
         == update.message.reply_text.await_args_list[-1].args[0]
@@ -191,9 +206,15 @@ def test_audio_sem_fazenda_e_falha_nao_gera_voz(ambiente, monkeypatch):
     update, context = ambiente
     update.message.voice = SimpleNamespace(file_id="a")
     context.bot = SimpleNamespace(
-        get_file=AsyncMock(return_value=SimpleNamespace(download_to_drive=AsyncMock()))
+        get_file=AsyncMock(
+            return_value=SimpleNamespace(
+                download_as_bytearray=AsyncMock(return_value=bytearray(b"ogg"))
+            )
+        )
     )
-    monkeypatch.setattr(bot, "transcrever", lambda caminho, lang: "Pergunta")
+    context.application.bot_data["audio"].transcrever = lambda conteudo, **kwargs: (
+        "Pergunta"
+    )
     executar(bot.on_audio(update, context))
     update.message.reply_audio.assert_not_awaited()
     assert update.message.reply_text.await_args_list[-1].args[0] == t(
@@ -212,11 +233,11 @@ def test_audio_sem_fazenda_e_falha_nao_gera_voz(ambiente, monkeypatch):
     )
 
 
-def test_inicializacao_reutiliza_assistente_e_segue_sem_mcp(monkeypatch):
+def test_inicializacao_reutiliza_assistente_e_recusa_sem_mcp(monkeypatch):
     class App:
         def __init__(self):
             self.bot_data = {}
-            self.job_queue = None
+            self.job_queue = SimpleNamespace(run_daily=lambda *args, **kwargs: None)
             self.handlers = []
             self.rodou = False
 
@@ -259,15 +280,19 @@ def test_inicializacao_reutiliza_assistente_e_segue_sem_mcp(monkeypatch):
     monkeypatch.setattr(
         bot, "Assistente", lambda *args: argumentos.append(args) or assistente
     )
+    monkeypatch.setattr(bot, "VisaoGroq", lambda *args: "visao")
+    monkeypatch.setattr(bot, "TranscritorGroq", lambda *args: "stt")
     bot.iniciar_bot()
-    assert apps[-1].rodou and apps[-1].bot_data["assistente"] is assistente
+    assert apps[-1].rodou
     assert argumentos == [
         ("fake-client", "fake-model", "https://example.test/mcp", "fake-mcp")
     ]
+    assert apps[-1].bot_data["conversa"].assistente is assistente
+    assert len(apps[-1].handlers) > 0
     monkeypatch.delenv("MCP_TOKEN")
-    bot.iniciar_bot()
-    assert apps[-1].rodou and "assistente" not in apps[-1].bot_data
-    assert len(apps[-1].handlers) == len(apps[-2].handlers) > 0
+    with pytest.raises(SystemExit, match="MCP_TOKEN"):
+        bot.iniciar_bot()
+    assert len(apps) == 1
 
 
 def test_resumo_usa_apenas_resposta_fundamentada(monkeypatch):
@@ -293,6 +318,55 @@ def test_resumo_usa_apenas_resposta_fundamentada(monkeypatch):
 
 def test_alerta_sem_destinatario_nao_consulta_dados(monkeypatch):
     monkeypatch.setattr(
-        bot, "listar_alertas", lambda: [{"chat_id": None, "cultura": "Soja"}]
+        alertas, "situacao", lambda *args: pytest.fail("não deve consultar")
     )
-    assert bot.verificar_alertas() == []
+    banco = SimpleNamespace(
+        listar_alertas=lambda ativos: [{"chat_id": None, "cultura": "Soja", "ativo": 1}]
+    )
+    from datetime import date
+
+    assert alertas.verificar(banco, date(2026, 11, 15)) == []
+
+
+def test_audio_bloqueado_antes_de_download_e_uma_contagem_no_sucesso(
+    ambiente, monkeypatch
+):
+    update, context = ambiente
+    db.criar_fazenda(1, 2, "BR", 123)
+    update.message.voice = SimpleNamespace(file_id="a")
+    arquivo = SimpleNamespace(
+        download_as_bytearray=AsyncMock(return_value=bytearray(b"ogg"))
+    )
+    context.bot = SimpleNamespace(get_file=AsyncMock(return_value=arquivo))
+    limite = Limite(maximo=1, relogio=lambda: 100)
+    context.application.bot_data["limite"] = limite
+    context.application.bot_data["conversa"].limite = limite
+    transcricoes = []
+    context.application.bot_data["audio"].transcrever = lambda *args, **kwargs: (
+        transcricoes.append(args) or "pergunta"
+    )
+    monkeypatch.setattr(bot, "_resumir_para_voz", lambda texto: "summary")
+    monkeypatch.setattr(bot, "sintetizar_voz", lambda texto: b"wav")
+    executar(bot.on_audio(update, context))
+    assert transcricoes == [(b"ogg",)]
+    update.message.reply_text.assert_any_await("Resultado com fonte NASA")
+    executar(bot.on_audio(update, context))
+    assert context.bot.get_file.await_count == 1
+    assert len(transcricoes) == 1
+    update.message.reply_text.assert_awaited_with(t("limite", "es"))
+
+
+def test_falha_no_download_conta_uma_vez_e_retorna_mensagem(ambiente):
+    update, context = ambiente
+    update.message.voice = SimpleNamespace(file_id="a")
+    context.bot = SimpleNamespace(
+        get_file=AsyncMock(side_effect=RuntimeError("arquivo indisponível"))
+    )
+    limite = Limite(maximo=1, relogio=lambda: 100)
+    context.application.bot_data["limite"] = limite
+    context.application.bot_data["conversa"].limite = limite
+    executar(bot.on_audio(update, context))
+    update.message.reply_text.assert_awaited_with(t("audio_falhou", "es"))
+    executar(bot.on_audio(update, context))
+    assert context.bot.get_file.await_count == 1
+    update.message.reply_text.assert_awaited_with(t("limite", "es"))

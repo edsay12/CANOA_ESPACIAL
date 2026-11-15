@@ -141,6 +141,7 @@ sequenceDiagram
 - **Purpose**: Liga Telegram aos fluxos, agenda alertas e checa o ambiente (BOT-35, BOT-43).
 - **Location**: `bot.py`
 - **Interfaces**: `verificar_ambiente(env) -> None` (sai com a variável ausente) · `agendar(job_queue, verificar)` (10:00 UTC) · `main()`
+- **Execução**: valida as chaves e `MCP_PUBLIC_URL` em HTTPS antes do polling. Os handlers usam uma instância dos fluxos e do limite por chat. O job usa `core.alertas.verificar`, confirma o vínculo da inscrição e grava o horário de envio após a confirmação do Telegram. [JobQueue do python-telegram-bot](https://docs.python-telegram-bot.org/en/stable/telegram.ext.jobqueue.html#telegram.ext.JobQueue.run_daily).
 
 ---
 
