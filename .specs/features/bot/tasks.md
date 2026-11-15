@@ -178,6 +178,7 @@ T4 → T14
 
 ### T5: Ferramentas do motor
 
+**Branch**: `feat/bot-ferramentas-motor-t5`
 **What**: `bot_logica/ferramentas.py` com as 8 ferramentas (função, descrição PT/EN, schema JSON) e `executar` com erro legível.
 **Where**: `bot_logica/ferramentas.py`
 **Depends on**: T2
@@ -186,12 +187,13 @@ T4 → T14
 
 **Done when**:
 
-- [ ] Motor falso nos testes
-- [ ] Resultado com `preliminar = true` ganha `aviso` (BOT-46)
-- [ ] Gate quick passa; 5 testes
+- [x] Motor falso nos testes
+- [x] Resultado com `preliminar = true` ganha `aviso` (BOT-46)
+- [x] Gate quick passa com os 5 checks de aceite e um teste do catálogo e dos schemas
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
