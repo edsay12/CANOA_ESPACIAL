@@ -355,6 +355,7 @@ T4 → T14
 
 ### T14: Ligação com o Telegram
 
+**Branch**: `feat/bot-telegram-t14`
 **What**: `bot.py` com `verificar_ambiente`, handlers (comandos, localização, texto, foto, voz) chamando `bot_logica`, `agendar` às 10:00 UTC e `main()`.
 **Where**: `bot.py`
 **Depends on**: T11, T12, T13, T4
@@ -363,10 +364,11 @@ T4 → T14
 
 **Done when**:
 
-- [ ] Gate quick passa; 2 testes
+- [x] Gate quick passa com os checks C35 e C43 e regressões de entrega, foto e controle de áudio
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 

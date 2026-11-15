@@ -1,203 +1,33 @@
-"""Bot Telegram: conversa via Groq (Remote MCP), localização, fotos, áudio, alertas."""
+"""Ligação dos fluxos de conversa, fotos e áudio ao Telegram."""
 
 import asyncio
 import logging
 import os
-import tempfile
-from datetime import date, datetime, timedelta
-from pathlib import Path
+from datetime import UTC, datetime, time
+from types import SimpleNamespace
+from urllib.parse import urlsplit
 
-import numpy as np
-import pandas as pd
 import requests
 from dotenv import load_dotenv
 from openai import OpenAI
-from telegram import Update
 from telegram.error import TelegramError
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    ContextTypes,
-    MessageHandler,
-    filters,
-)
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
+from bot_logica.audio import Audio, TranscritorGroq
+from bot_logica.conversa import Conversa, dividir
+from bot_logica.fotos import Fotos, VisaoGroq, maior_foto
 from bot_logica.idioma import idioma as detectar_idioma
 from bot_logica.idioma import t
 from bot_logica.limite import Limite
-from bot_logica.llm import Assistente, LLMIndisponivel
-from core import balanco, cache, culturas, db, pais, power, solo
-from core.db import listar_alertas
+from bot_logica.llm import Assistente
+from core import alertas, clima, contexto, db, modelo
 
 logger = logging.getLogger(__name__)
-
-GROQ_AUDIO_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
-WHISPER_MODEL = "whisper-large-v3-turbo"
-
-MENSAGENS_ALERTA = {
-    "pt": (
-        "⚠️ *Alerta de tendência de falta d'água*\n"
-        "Sua lavoura de *{cultura}* está com déficit hídrico (Ks = {ks:.2f}) e faltam cerca de "
-        "*{dias} dia(s)* para a fase crítica de florescimento.\n"
-        "_Nota: os satélites da NASA POWER têm atraso de alguns dias; este aviso indica uma tendência recente._"
-    ),
-    "en": (
-        "⚠️ *Water shortage trend alert*\n"
-        "Your *{cultura}* crop is experiencing water stress (Ks = {ks:.2f}) with about "
-        "*{dias} day(s)* left until the critical flowering stage.\n"
-        "_Note: NASA POWER satellite data has a few days of latency; this alert reflects a recent trend._"
-    ),
-    "es": (
-        "⚠️ *Alerta de tendencia de falta de agua*\n"
-        "Tu cultivo de *{cultura}* presenta estrés hídrico (Ks = {ks:.2f}) y faltan unos "
-        "*{dias} día(s)* para la etapa crítica de floración.\n"
-        "_Nota: los datos de NASA POWER tienen unos días de retraso; este aviso indica una tendencia reciente._"
-    ),
-}
-
-
-def _baixar_power_recente(lat: float, lon: float, dias: int = 50) -> pd.DataFrame:
-    """Busca os últimos `dias` da NASA POWER com cache válido por 1 dia."""
-    hoje = date.today()
-    inicio = hoje - timedelta(days=dias)
-    lat_r, lon_r = round(lat, 2), round(lon, 2)
-
-    path = cache.caminho(f"alerta_{hoje.strftime('%Y%m%d')}", lat_r, lon_r)
-    dados = cache.ler(path)
-
-    if dados is None:
-        params = {
-            "parameters": ",".join(power.COLUNAS),
-            "community": "AG",
-            "latitude": lat_r,
-            "longitude": lon_r,
-            "start": inicio.strftime("%Y%m%d"),
-            "end": hoje.strftime("%Y%m%d"),
-            "format": "JSON",
-        }
-        r = requests.get(power.URL, params=params, timeout=60)
-        r.raise_for_status()
-        dados = r.json()
-        cache.gravar(path, dados)
-
-    p = dados["properties"]["parameter"]
-    df = pd.DataFrame({nome: p.get(chave, {}) for chave, nome in power.COLUNAS.items()}).sort_index()
-    df = df.replace(-999, np.nan).astype(float)
-    df.insert(0, "data", pd.to_datetime(df.index, format="%Y%m%d"))
-    # Remove os dias finais que ainda vieram totalmente vazios (latência da NASA)
-    df = df.dropna(subset=["tmax", "tmin"]).reset_index(drop=True)
-    return df
-
-
-def _ks_atual(serie: pd.DataFrame, cultura: dict, cad_mm: float, data_plantio: str, lat: float) -> float | None:
-    """Roda o balanço diário desde `data_plantio` até o último dia disponível e retorna o último Ks."""
-    inicio_ts = pd.Timestamp(data_plantio)
-    janela = serie[serie["data"] >= inicio_ts].copy()
-    if janela.empty:
-        return None
-
-    chuva = janela["chuva"].fillna(0.0).to_numpy(float)
-    temps = janela[["tmax", "tmin"]].interpolate(limit_direction="both").to_numpy(float)
-    extra = janela.reindex(columns=["umid_rel", "vento", "pressao", "rad"]).to_numpy(float)
-    doy = janela["data"].dt.day_of_year.to_numpy()
-
-    taw = float(cad_mm) * float(cultura["raiz_m"])
-    raw = float(cultura["p_deplecao"]) * taw
-    dr = 0.5 * taw
-    ks_ultimo = 1.0
-
-    for i in range(len(janela)):
-        etc = balanco.kc_diario(cultura, i + 1) * balanco.et0_dia(
-            temps[i, 0], temps[i, 1], *extra[i], balanco.ra_mm(lat, doy[i])
-        )
-        ks_ultimo = 1.0 if dr <= raw else (taw - dr) / (taw - raw)
-        eta = min(ks_ultimo * etc, taw - dr + chuva[i])
-        dr = float(np.clip(dr - chuva[i] + eta, 0.0, taw))
-
-    return float(np.clip(ks_ultimo, 0.0, 1.0))
-
-
-def verificar_alertas() -> list[dict]:
-    """Verifica inscrições ativas no SQLite e retorna [{"chat_id", "mensagem"}] para lavouras em risco."""
-    inscricoes = listar_alertas()
-    if not inscricoes:
-        return []
-
-    catalogo = culturas.carregar()
-    hoje = date.today()
-    alertas_disparar = []
-
-    for item in inscricoes:
-        if not item.get("chat_id"):
-            continue
-        nome_cultura = item["cultura"]
-        cultura = catalogo.get(nome_cultura)
-        if not cultura or not culturas.completa(cultura):
-            continue
-
-        data_plantio = date.fromisoformat(item["data_plantio"])
-        dias_desde_plantio = (hoje - data_plantio).days
-        if dias_desde_plantio < 0:
-            continue
-
-        # Início da fase de meio (florescimento) = dias_ini + dias_des
-        inicio_meio = int(cultura["dias_ini"]) + int(cultura["dias_des"])
-        dias_para_meio = inicio_meio - dias_desde_plantio
-
-        # Critério da missão: faltam <= 15 dias para o início da fase de meio (e ainda não passou dela)
-        if not (0 <= dias_para_meio <= 15):
-            continue
-
-        try:
-            serie = _baixar_power_recente(item["lat"], item["lon"], dias=50)
-            s = solo.agua_disponivel(item["lat"], item["lon"])
-            ks = _ks_atual(serie, cultura, s["cad_mm"], item["data_plantio"], item["lat"])
-        # Isola falhas de serviços externos ou cálculos para não interromper as demais inscrições.
-        except Exception:
-            logger.exception("Falha ao verificar alerta para a cultura %s", nome_cultura)
-            continue
-
-        if ks is not None and ks < 0.7:
-            idioma = item.get("idioma") or "pt"
-            template = MENSAGENS_ALERTA.get(idioma, MENSAGENS_ALERTA["en"])
-            nome_exibicao = cultura.get(f"nome_{idioma}") or cultura.get("nome") or nome_cultura
-            msg = template.format(cultura=nome_exibicao, ks=ks, dias=dias_para_meio)
-            alertas_disparar.append({"chat_id": item["chat_id"], "mensagem": msg})
-
-    return alertas_disparar
-
-
-def transcrever(caminho_arquivo: str | Path, idioma: str | None = None) -> str:
-    """Transcreve nota de voz (.ogg/.oga/.mp3/.wav) via Whisper na API da Groq."""
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        raise RuntimeError("Variável de ambiente GROQ_API_KEY não configurada.")
-
-    caminho = Path(caminho_arquivo)
-    if not caminho.exists():
-        raise FileNotFoundError(f"Áudio não encontrado: {caminho}")
-
-    # Telegram salva notas de voz como .oga; renomeamos o filename no upload para .ogg (aceito nativamente pelo Whisper)
-    nome_upload = f"{caminho.stem}.ogg" if caminho.suffix.lower() == ".oga" else caminho.name
-
-    headers = {"Authorization": f"Bearer {api_key}"}
-    data = {"model": WHISPER_MODEL, "response_format": "text"}
-    if idioma:
-        data["language"] = idioma
-
-    with open(caminho, "rb") as audio_file:
-        files = {"file": (nome_upload, audio_file, "audio/ogg")}
-        resp = requests.post(GROQ_AUDIO_URL, headers=headers, data=data, files=files, timeout=30)
-        resp.raise_for_status()
-        return resp.text.strip()
-
-# --- Integração Telegram (Texto, Áudio STT + TTS Groq, Localização e Alertas) ---
 
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_TTS_URL = "https://api.groq.com/openai/v1/audio/speech"
 CHAT_MODEL = "openai/gpt-oss-120b"
 TTS_MODEL = "canopylabs/orpheus-v1-english"
-limite_mensagens = Limite()
 
 
 def sintetizar_voz(texto: str) -> bytes:
@@ -210,7 +40,10 @@ def sintetizar_voz(texto: str) -> bytes:
     texto_curto = texto.strip()[:190]
     resp = requests.post(
         GROQ_TTS_URL,
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
         json={
             "model": TTS_MODEL,
             "input": texto_curto,
@@ -234,8 +67,11 @@ def _resumir_para_voz(resposta: str) -> str:
         json={
             "model": os.environ.get("GROQ_MODEL_CHAT") or CHAT_MODEL,
             "messages": [
-                {"role": "system", "content": "Summarize the supplied answer faithfully in spoken English, "
-                 "under 180 characters. Do not add facts, recommendations, or numbers."},
+                {
+                    "role": "system",
+                    "content": "Summarize the supplied answer faithfully in spoken English, "
+                    "under 180 characters. Do not add facts, recommendations, or numbers.",
+                },
                 {"role": "user", "content": resposta},
             ],
             "temperature": 0,
@@ -246,188 +82,244 @@ def _resumir_para_voz(resposta: str) -> str:
     return resp.json()["choices"][0]["message"]["content"].strip()
 
 
-async def _responder_consulta(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-    texto: str,
-    responder_com_audio: bool = False,
-) -> None:
-    lang = detectar_idioma(update.effective_user.language_code)
-    chat_id = str(update.effective_chat.id)
-
-    if not limite_mensagens.permitir(chat_id):
-        await update.message.reply_text(t("limite", lang))
-        return
-
-    fazenda = db.fazenda_por_chat(chat_id)
-    if fazenda is None:
-        await update.message.reply_text(t("pedir_localizacao", lang))
-        return
-    assistente = context.application.bot_data.get("assistente")
-    if assistente is None:
-        await update.message.reply_text(t("llm_indisponivel", lang))
-        return
+def verificar_ambiente(env):
+    for nome in ("TELEGRAM_BOT_TOKEN", "GROQ_API_KEY", "MCP_TOKEN", "MCP_PUBLIC_URL"):
+        if not env.get(nome, "").strip():
+            raise SystemExit(f"Variável obrigatória ausente: {nome}")
     try:
-        resposta = await asyncio.to_thread(assistente.responder, chat_id, texto, fazenda, lang)
-    except LLMIndisponivel:
-        await update.message.reply_text(t("llm_indisponivel", lang))
+        url = urlsplit(env["MCP_PUBLIC_URL"])
+        valida = url.scheme == "https" and url.netloc and url.hostname
+    except ValueError:
+        valida = False
+    if not valida:
+        raise SystemExit("MCP_PUBLIC_URL deve ser uma URL HTTPS válida")
+
+
+def agendar(job_queue, verificar):
+    job_queue.run_daily(verificar, time=time(10, 0, tzinfo=UTC))
+
+
+def _dados(update, context):
+    return (
+        str(update.effective_chat.id),
+        detectar_idioma(update.effective_user.language_code),
+        context.application.bot_data,
+    )
+
+
+async def _enviar(update, mensagens):
+    for mensagem in mensagens:
+        await update.message.reply_text(mensagem)
+
+
+async def cmd_start(update, context):
+    chat, lang, dados = _dados(update, context)
+    await _enviar(
+        update,
+        await asyncio.to_thread(dados["conversa"].start, chat, context.args, lang),
+    )
+
+
+async def cmd_alerta(update, context):
+    chat, lang, dados = _dados(update, context)
+    await _enviar(
+        update,
+        await asyncio.to_thread(dados["conversa"].alerta, chat, context.args, lang),
+    )
+
+
+async def cmd_testar_alerta(update, context):
+    chat, lang, dados = _dados(update, context)
+    await _enviar(
+        update, await asyncio.to_thread(dados["conversa"].testar_alerta, chat, lang)
+    )
+
+
+async def on_location(update, context):
+    chat, lang, dados = _dados(update, context)
+    loc = update.message.location
+    await _enviar(
+        update,
+        await asyncio.to_thread(
+            dados["conversa"].localizacao, chat, loc.latitude, loc.longitude, lang
+        ),
+    )
+
+
+async def on_text(update, context):
+    chat, lang, dados = _dados(update, context)
+    await _enviar(
+        update,
+        await asyncio.to_thread(
+            dados["conversa"].texto, chat, update.message.text, lang
+        ),
+    )
+
+
+async def cmd_voz(update, context):
+    chat, lang, dados = _dados(update, context)
+    if not dados["limite"].permitir(chat):
+        await _enviar(update, [t("limite", lang)])
         return
-
-    await update.message.reply_text(resposta)
-    if responder_com_audio:
-        try:
-            texto_en = await asyncio.to_thread(_resumir_para_voz, resposta)
-            audio_bytes = await asyncio.to_thread(sintetizar_voz, texto_en)
-            await update.message.reply_audio(audio=audio_bytes, filename="resposta_canoa.wav", title="Canoa Espacial")
-        except (requests.RequestException, RuntimeError, TelegramError, ValueError, KeyError, IndexError):
-            logger.warning("Não foi possível gerar resposta em áudio")
-
-
-async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    lang = detectar_idioma(update.effective_user.language_code)
-    await update.message.reply_text(t("boas_vindas", lang))
-
-
-async def cmd_voz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     texto = " ".join(context.args).strip()
     if not texto:
         await update.message.reply_text("Use: /voz Your message in English")
         return
     try:
-        audio_bytes = await asyncio.to_thread(sintetizar_voz, texto)
+        audio = await asyncio.to_thread(sintetizar_voz, texto)
         await update.message.reply_audio(
-            audio=audio_bytes,
-            filename="canoa_voz.wav",
-            title="Canoa Espacial",
+            audio=audio, filename="canoa_voz.wav", title="Canoa Espacial"
         )
     except (requests.RequestException, RuntimeError, TelegramError):
-        await update.message.reply_text(t("llm_indisponivel", detectar_idioma(update.effective_user.language_code)))
+        await update.message.reply_text(t("llm_indisponivel", lang))
 
 
-async def on_location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    lang = detectar_idioma(update.effective_user.language_code)
-    loc = update.message.location
-    try:
-        codigo = pais.de(loc.latitude, loc.longitude)["iso2"]
-    except ValueError:
-        codigo = None
-    if codigo is None:
-        await update.message.reply_text(t("ponto_invalido", lang))
+async def on_foto(update, context):
+    chat, lang, dados = _dados(update, context)
+    if not dados["limite"].permitir(chat):
+        await _enviar(update, [t("limite", lang), t("confirme_campo", lang)])
         return
-    chat_id = str(update.effective_chat.id)
-    fazenda = db.fazenda_por_chat(chat_id)
-    if fazenda:
-        db.atualizar_local(fazenda["id"], loc.latitude, loc.longitude, codigo)
-    else:
-        db.criar_fazenda(loc.latitude, loc.longitude, codigo, chat_id)
-    mensagens = {"pt": "Localização da fazenda salva.", "en": "Farm location saved.", "es": "Ubicación de la finca guardada."}
-    await update.message.reply_text(mensagens[lang])
+    fazenda = await asyncio.to_thread(db.fazenda_por_chat, chat)
+    if fazenda is None:
+        await _enviar(update, [t("pedir_localizacao", lang), t("confirme_campo", lang)])
+        return
+    try:
+        foto = maior_foto(update.message.photo)
+        arquivo = await context.bot.get_file(foto.file_id)
+        conteudo = bytes(await arquivo.download_as_bytearray())
+    except (TelegramError, OSError, RuntimeError):
+        await _enviar(update, [t("foto_falhou", lang), t("confirme_campo", lang)])
+        return
+    mensagens = await asyncio.to_thread(
+        dados["fotos"].tratar_foto,
+        chat,
+        conteudo,
+        update.message.caption,
+        lang,
+        datetime.now(UTC),
+    )
+    await _enviar(update, mensagens)
 
 
-async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await _responder_consulta(update, context, update.message.text, responder_com_audio=False)
-
-
-async def on_audio(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    lang = detectar_idioma(update.effective_user.language_code)
+async def on_audio(update, context):
+    chat, lang, dados = _dados(update, context)
+    if not dados["limite"].permitir(chat):
+        await _enviar(update, [t("limite", lang)])
+        return
     midia = update.message.voice or update.message.audio
-    with tempfile.NamedTemporaryFile(suffix=".oga", delete=False) as tmp:
-        caminho_tmp = Path(tmp.name)
-
     try:
-        arquivo_tg = await context.bot.get_file(midia.file_id)
-        await arquivo_tg.download_to_drive(custom_path=str(caminho_tmp))
-        texto_transcrito = await asyncio.to_thread(transcrever, caminho_tmp, lang)
-        if not texto_transcrito.strip():
-            raise ValueError("Transcrição vazia")
-    except (requests.RequestException, RuntimeError, TelegramError, OSError, ValueError):
-        await update.message.reply_text(t("audio_falhou", lang))
+        arquivo = await context.bot.get_file(midia.file_id)
+        conteudo = bytes(await arquivo.download_as_bytearray())
+    except (TelegramError, OSError, RuntimeError):
+        await _enviar(update, [t("audio_falhou", lang)])
         return
-    finally:
-        caminho_tmp.unlink(missing_ok=True)
+    nome = getattr(midia, "file_name", None) or "voz.ogg"
+    transcricao, respostas = await asyncio.to_thread(
+        dados["audio"].processar_voz, chat, conteudo, lang, nome, limite_verificado=True
+    )
+    if transcricao is not None:
+        await _enviar(update, dividir(f"🎙️ {transcricao}"))
+    await _enviar(update, respostas)
+    erros = {
+        t(chave, lang)
+        for chave in ("audio_falhou", "pedir_localizacao", "llm_indisponivel", "limite")
+    }
+    if (
+        transcricao
+        and respostas
+        and not any(resposta in erros for resposta in respostas)
+    ):
+        try:
+            resumo = await asyncio.to_thread(_resumir_para_voz, "".join(respostas))
+            voz = await asyncio.to_thread(sintetizar_voz, resumo)
+            await update.message.reply_audio(
+                audio=voz, filename="resposta_canoa.wav", title="Canoa Espacial"
+            )
+        except (
+            requests.RequestException,
+            RuntimeError,
+            TelegramError,
+            ValueError,
+            KeyError,
+            IndexError,
+        ):
+            logger.warning("Não foi possível gerar resposta em áudio")
 
-    await update.message.reply_text(f"🎙️ {texto_transcrito}")
-    await _responder_consulta(update, context, texto_transcrito, responder_com_audio=True)
 
-
-async def cmd_alerta(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    lang = detectar_idioma(update.effective_user.language_code)
-    fazenda = db.fazenda_por_chat(str(update.effective_chat.id))
-    if not fazenda:
-        await update.message.reply_text(t("pedir_localizacao", lang))
-        return
-
-    catalogo = culturas.carregar()
-    nomes_validos = [k for k, v in catalogo.items() if culturas.completa(v)]
-
-    if len(context.args) < 2:
-        await update.message.reply_text(
-            t("alerta_formato", lang, culturas=", ".join(nomes_validos[:8]))
+async def job_verificar_alertas(context):
+    agora = datetime.now(UTC)
+    candidatos = await asyncio.to_thread(alertas.verificar, db, agora)
+    inscricoes = await asyncio.to_thread(db.listar_alertas)
+    inscricoes_por_id = {item["id"]: item for item in inscricoes}
+    for candidato in candidatos:
+        inscricao = inscricoes_por_id.get(candidato["alerta_id"])
+        if not inscricao or str(inscricao.get("chat_id")) != str(candidato["chat_id"]):
+            continue
+        idioma = inscricao.get("idioma") or "pt"
+        mensagem = t(candidato["mensagem_chave"], idioma, **candidato["valores"])
+        try:
+            await context.bot.send_message(chat_id=candidato["chat_id"], text=mensagem)
+        except TelegramError:
+            logger.warning("Falha ao entregar alerta %s", candidato["alerta_id"])
+            continue
+        await asyncio.to_thread(
+            db.marcar_alerta_enviado, candidato["alerta_id"], datetime.now(UTC)
         )
-        return
-
-    cultura_nome = context.args[0].capitalize()
-    data_str = context.args[1]
-    if cultura_nome not in nomes_validos:
-        await update.message.reply_text(t("alerta_formato", lang, culturas=", ".join(nomes_validos[:8])))
-        return
-    try:
-        data_iso = datetime.strptime(data_str, "%d/%m/%Y").date().isoformat()
-    except ValueError:
-        await update.message.reply_text(
-            t("alerta_formato", lang, culturas=", ".join(nomes_validos[:8]))
-        )
-        return
-
-    db.inscrever_alerta(fazenda["id"], cultura_nome, data_iso, idioma=lang)
-    await update.message.reply_text(t("alerta_ok", lang, cultura=cultura_nome, data=data_str))
 
 
-async def job_verificar_alertas(context: ContextTypes.DEFAULT_TYPE) -> None:
-    for alerta in await asyncio.to_thread(verificar_alertas):
-        await context.bot.send_message(
-            chat_id=alerta["chat_id"],
-            text=alerta["mensagem"],
-            parse_mode="Markdown",
-        )
-
-
-def iniciar_bot() -> None:
+def main():
     load_dotenv()
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    if not token:
-        raise RuntimeError("Variável de ambiente TELEGRAM_BOT_TOKEN não configurada.")
-
+    verificar_ambiente(os.environ)
+    cliente = OpenAI(api_key=os.environ["GROQ_API_KEY"])
+    assistente = Assistente(
+        cliente,
+        os.environ.get("GROQ_MODEL_CHAT") or CHAT_MODEL,
+        os.environ["MCP_PUBLIC_URL"],
+        os.environ["MCP_TOKEN"],
+    )
+    limite = Limite()
+    motor = SimpleNamespace(
+        contexto=contexto.contexto,
+        clima_mudou=clima.clima_mudou,
+        ranking_safra=modelo.ranking_safra,
+    )
+    conversa = Conversa(db, motor, assistente, limite, alertas)
+    fotos = Fotos(
+        db,
+        VisaoGroq(cliente, os.environ.get("GROQ_MODEL_VISION") or "qwen/qwen3.8-27b"),
+        alertas,
+    )
+    audio = Audio(
+        conversa,
+        TranscritorGroq(
+            cliente, os.environ.get("GROQ_MODEL_AUDIO") or "whisper-large-v3-turbo"
+        ),
+    )
     app = (
         Application.builder()
-        .token(token)
+        .token(os.environ["TELEGRAM_BOT_TOKEN"])
         .connect_timeout(30)
         .read_timeout(30)
         .write_timeout(30)
         .build()
     )
-    api_key = os.environ.get("GROQ_API_KEY")
-    mcp_url = os.environ.get("MCP_PUBLIC_URL")
-    mcp_token = os.environ.get("MCP_TOKEN")
-    if api_key and mcp_url and mcp_token:
-        app.bot_data["assistente"] = Assistente(
-            OpenAI(api_key=api_key), os.environ.get("GROQ_MODEL_CHAT") or CHAT_MODEL, mcp_url, mcp_token
-        )
-    else:
-        logger.warning("Assistente indisponível: configuração Groq/MCP incompleta")
+    app.bot_data.update(conversa=conversa, fotos=fotos, audio=audio, limite=limite)
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("alerta", cmd_alerta))
+    app.add_handler(CommandHandler("testar_alerta", cmd_testar_alerta))
     app.add_handler(CommandHandler("voz", cmd_voz))
     app.add_handler(MessageHandler(filters.LOCATION, on_location))
+    app.add_handler(MessageHandler(filters.PHOTO, on_foto))
     app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, on_audio))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
-
-    if app.job_queue:
-        app.job_queue.run_repeating(job_verificar_alertas, interval=21600, first=15)
-
-    print("Bot da Canoa Espacial rodando no Telegram... (Ctrl+C para parar)")
+    if app.job_queue is None:
+        raise RuntimeError("JobQueue não disponível")
+    agendar(app.job_queue, job_verificar_alertas)
     app.run_polling()
 
 
+iniciar_bot = main
+
+
 if __name__ == "__main__":
-    iniciar_bot()
+    main()
