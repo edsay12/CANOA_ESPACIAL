@@ -71,6 +71,17 @@ def simular_safra(serie, cultura, cad_mm, inicio, lat):
     janela = serie[serie["data"] >= pd.Timestamp(inicio)].head(n)
     if len(janela) < n:
         raise ValueError(f"série não cobre o ciclo de {n} dias a partir de {inicio}")
+    calculo = balanco_parcial(janela, cultura, cad_mm, lat)
+    soma_eta, soma_etc = calculo["eta"], calculo["etc"]
+    perda = 0.0 if soma_etc == 0 else float(np.clip(float(cultura["ky"]) * (1 - soma_eta / soma_etc), 0.0, 1.0))
+    return {"perda": perda, "quebra": perda > LIMITE_QUEBRA, "eta": soma_eta, "etc": soma_etc}
+
+
+def balanco_parcial(janela, cultura, cad_mm, lat):
+    """Mesmo balanço diário da safra, para a série observada desde o plantio."""
+    if janela.empty:
+        raise ValueError("série sem dias observados")
+    n = len(janela)
     chuva = janela["chuva"].fillna(0.0).to_numpy(float)
     temps = janela[["tmax", "tmin"]].interpolate(limit_direction="both").to_numpy(float)
     extra = janela.reindex(columns=["umid_rel", "vento", "pressao", "rad"]).to_numpy(float)
@@ -87,5 +98,4 @@ def simular_safra(serie, cultura, cad_mm, inicio, lat):
         dr = float(np.clip(dr - chuva[i] + eta, 0.0, taw))
         soma_eta += eta
         soma_etc += etc
-    perda = 0.0 if soma_etc == 0 else float(np.clip(float(cultura["ky"]) * (1 - soma_eta / soma_etc), 0.0, 1.0))
-    return {"perda": perda, "quebra": perda > LIMITE_QUEBRA, "eta": soma_eta, "etc": soma_etc}
+    return {"ks": float(np.clip(ks, 0.0, 1.0)), "eta": soma_eta, "etc": soma_etc}
