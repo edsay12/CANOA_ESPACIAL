@@ -62,7 +62,8 @@ def test_simulacao_usa_penman_monteith_quando_ha_dados():
     c = um_dia()
     s = serie("2001-07-06", 1, tmax=21.5, tmin=12.3).assign(umid_rel=70.56, vento=2.078, pressao=100.1, rad=22.07)
     r = balanco.simular_safra(s, c, 1000, date(2001, 7, 6), 50.8)
-    assert r["etc"] == pytest.approx(float(c["kc_ini"]) * 3.9, abs=0.05)
+    pm = balanco.et0_penman_monteith(21.5, 12.3, 70.56, 2.078, 100.1, 22.07, balanco.ra_mm(50.8, 187) / 0.408)
+    assert r["etc"] == pytest.approx(float(c["kc_ini"]) * pm, rel=1e-9)
 
 
 def test_kc_por_fase():

@@ -245,8 +245,10 @@ def test_temporada_incompleta_fora_das_medias(ponto):
         assert r["anos_sem_estacao"] == 1, ultimo
         assert r["periodos"]["2010-2025"]["chuva_mm"] == pytest.approx(sum(b) / 15)
     faixa(df, "2025-08-01", "2025-12-31", "chuva", 0.0)
-    plantar(df, "2025-10-15", "2025-11-30")  # 31 dias depois do fim: conta
-    assert clima.clima_mudou(-17.8, -50.92, "pt")["anos_sem_estacao"] == 0
+    for ultimo in ("2025-11-30", "2025-12-01"):  # 31 e exatamente 30 dias depois do fim: conta
+        faixa(df, "2025-08-01", "2025-12-31", "chuva", 0.0)
+        plantar(df, "2025-10-15", ultimo)
+        assert clima.clima_mudou(-17.8, -50.92, "pt")["anos_sem_estacao"] == 0, ultimo
 
 
 def test_janela_marca_preliminar(janela, monkeypatch):

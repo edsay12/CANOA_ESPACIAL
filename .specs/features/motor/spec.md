@@ -83,7 +83,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 
 1. WHEN `power.serie(lat, lon)` is called for a point without a cache file THEN the system SHALL request the NASA POWER daily point API with parameters `PRECTOTCORR,T2M_MAX,T2M_MIN,ALLSKY_SFC_SW_DWN,GWETROOT,RH2M,WS2M,PS`, `community=AG`, from 1995-01-01 to 2025-12-31, and save the response to `cache/power_{lat:.2f}_{lon:.2f}.json`.
 2. WHEN `power.serie(lat, lon)` is called for a point whose cache file exists and is valid JSON THEN the system SHALL return the data without any network request.
-3. The system SHALL return from `power.serie` a DataFrame with one row per day and the columns `data, chuva, tmax, tmin, rad, umid_solo`.
+3. The system SHALL return from `power.serie` a DataFrame with one row per day and the columns `data, chuva, tmax, tmin, rad, umid_solo, umid_rel, vento, pressao`.
 4. The system SHALL replace the NASA POWER fill value -999 with NaN in the returned DataFrame.
 5. IF the NASA POWER request fails or takes longer than 120 s and no cache file exists THEN the system SHALL raise `ErroFonteDados` with a message that names "NASA POWER".
 6. IF a cache file exists but is not valid JSON THEN the system SHALL discard it and request the data again.
