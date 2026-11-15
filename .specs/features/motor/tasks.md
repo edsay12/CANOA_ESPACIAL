@@ -373,12 +373,13 @@ T17 → T18
 
 **Done when**:
 
-- [ ] Séries sintéticas com estação conhecida (início, fim e veranicos plantados)
-- [ ] `chuva_por_ano` com 31 anos (1995–2025)
-- [ ] Gate quick passa; 8 testes
+- [x] Séries sintéticas com estação conhecida (início, fim e veranicos plantados)
+- [x] `chuva_por_ano` com 31 anos (1995–2025)
+- [x] Gate quick passa; 8 testes
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
