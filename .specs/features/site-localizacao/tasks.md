@@ -63,8 +63,8 @@ T4 → T5
 
 **Done when**:
 
-- [ ] Os SVGs locais estão completos, têm as dimensões originais e estão associados aos respectivos usos no desktop e no celular.
-- [ ] Gate quick passa com pelo menos 21 testes.
+- [x] Os SVGs locais estão completos, têm as dimensões originais e estão associados aos respectivos usos no desktop e no celular.
+- [x] Gate quick passa com pelo menos 21 testes.
 
 **Tests**: Unit em `tests/web/test_site_location_assets.py`, incluindo um teste novo dos arquivos e dimensões.  
 **Gate**: Quick  
