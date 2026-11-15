@@ -101,7 +101,7 @@ O motor calcula o risco climático e os planos de rotação, mas o técnico, o p
 6. IF all three priority sliders are 0 THEN the system SHALL show "Escolha pelo menos uma prioridade" and not call the motor.
 7. IF `itens` is empty THEN the system SHALL show "Nenhuma cultura com dados suficientes para este lugar".
 
-**Independent Test**: Rio Verde, data 03-15: ver cards ordenados; mover "Saúde do solo" para 100 e os outros para 0 e ver a ordem mudar.
+**Independent Test**: Rio Verde, data 02-15: ver cards ordenados; mover "Saúde do solo" para 100 e os outros para 0 e ver a ordem mudar.
 
 ---
 
