@@ -317,6 +317,7 @@ T4 → T14
 
 ### T12: Fotos
 
+**Branch**: `feat/bot-fotos-t12`
 **What**: `bot_logica/fotos.py` com `tratar_foto`: salvar, descrever (visão, sem diagnóstico), registrar, situação hídrica se houver alerta, frase final, sem fazenda.
 **Where**: `bot_logica/fotos.py`
 **Depends on**: T11
@@ -325,10 +326,11 @@ T4 → T14
 
 **Done when**:
 
-- [ ] Gate quick passa; 6 testes
+- [x] Gate quick passa com 6 checks de aceite e regressões de limpeza após falha e alerta legado
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
