@@ -141,6 +141,7 @@ T4 → T14
 
 ### T3: Clima recente
 
+**Branch**: `feat/bot-clima-recente-t3`
 **What**: `core/recente.py` com os últimos 45 dias do POWER, mesmas colunas de `power.serie`, cache de 1 dia.
 **Where**: `core/recente.py`
 **Depends on**: None
@@ -149,11 +150,12 @@ T4 → T14
 
 **Done when**:
 
-- [ ] Rede simulada; 2ª chamada no mesmo dia não chama a API; no dia seguinte chama
-- [ ] Gate quick passa; 1 teste
+- [x] Rede simulada; 2ª chamada no mesmo dia não chama a API; no dia seguinte chama
+- [x] Gate quick passa com C39 e dois testes de entradas inválidas, valores ausentes e falha da fonte
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
