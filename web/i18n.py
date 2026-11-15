@@ -51,6 +51,7 @@ TEXTOS = {
         ),
         "atualizar_fotos": "Atualizar fotos",
         "alertas_telegram": "Receber alertas no Telegram",
+        "aviso_preliminar": "parâmetros genéricos da FAO, não calibrados para a região",
     },
     "en": {
         "idioma": "Language",
@@ -96,6 +97,7 @@ TEXTOS = {
         ),
         "atualizar_fotos": "Refresh photos",
         "alertas_telegram": "Receive alerts on Telegram",
+        "aviso_preliminar": "generic FAO parameters, not calibrated for the region",
     },
     "es": {
         "idioma": "Idioma",
@@ -141,6 +143,7 @@ TEXTOS = {
         ),
         "atualizar_fotos": "Actualizar fotos",
         "alertas_telegram": "Recibir alertas en Telegram",
+        "aviso_preliminar": "parámetros genéricos de la FAO, no calibrados para la región",
     },
 }
 
