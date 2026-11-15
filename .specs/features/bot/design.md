@@ -123,6 +123,7 @@ sequenceDiagram
 - **Purpose**: Fluxos de texto, comandos e localização (BOT-15..18, BOT-21, BOT-33, BOT-34, BOT-40, BOT-44, BOT-45).
 - **Location**: `bot_logica/conversa.py`
 - **Interfaces**: `Conversa(db, motor, assistente, limite, alertas)` · `start(chat_id, args, lang)` · `localizacao(chat_id, lat, lon, lang)` · `texto(chat_id, texto, lang)` · `alerta(chat_id, args, lang)` · `testar_alerta(chat_id, lang)` → `list[str]` · `dividir(texto, 4096)`
+- **Execução**: cada entrada conta uma vez no limite do chat. A data do ranking usa UTC e o formato `MM-DD` do motor. Se o motor recusa a data ou a fonte falha após validar o ponto, o fluxo salva a localização e informa a indisponibilidade. A T14 liga os handlers do Telegram a `Conversa`.
 
 ### bot_logica.fotos
 - **Purpose**: Fluxo de foto (BOT-27..32).
