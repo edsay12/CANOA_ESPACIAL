@@ -102,6 +102,8 @@ def clima_mudou(lat, lon, idioma="pt"):
         if e is None:
             continue
         ini, fim = e
+        if fim >= serie["data"].max():  # MOT-62: ainda chovia no último dia da série, estação incompleta
+            continue
         s = serie[(serie["data"] >= ini) & (serie["data"] <= fim)]
         chuva = s["chuva"].fillna(0).to_numpy(float)
         ref = _referencia(ano, hemisferio)

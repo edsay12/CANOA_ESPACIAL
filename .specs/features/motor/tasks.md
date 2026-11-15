@@ -86,6 +86,7 @@ T9 → T14
 T14 → T15
 T10 → T15
 T8 → T15
+T14 → T19
 ```
 
 ### Phase 5: Ranking e planos
@@ -105,6 +106,7 @@ T16 → T17
 T15 → T18
 T16 → T18
 T17 → T18
+T19 → T18
 ```
 
 ---
@@ -438,11 +440,30 @@ T17 → T18
 
 ---
 
+### T19: Temporada incompleta fora das médias
+
+**What**: Em `clima_mudou`, a temporada que não termina até 2025-12-31 sai das médias e entra em `anos_sem_estacao` (decisão de 2026-11-15, user: "Descartar incompletas (Recommended)").
+**Where**: `core/clima.py`
+**Depends on**: T14
+**Reuses**: `estacao`
+**Requirement**: MOT-62
+
+**Done when**:
+
+- [x] Série sintética cuja última estação passa de 31/dez/2025 não entra na média 2010–2025
+- [x] Gate quick passa; 1 teste novo
+
+**Tests**: unit
+**Gate**: quick
+**Status**: ✅ Complete
+
+---
+
 ### T18: Integração nos 4 pontos da demo
 
 **What**: Testes com o cache versionado dos 4 pontos: tempo do ranking e dos planos, e o critério de sucesso de Rio Verde.
 **Where**: `tests/integracao/test_demo.py`
-**Depends on**: T15, T16, T17
+**Depends on**: T15, T16, T17, T19
 **Reuses**: `cache/` versionado, `data/paises.geojson`, `data/culturas.csv` validado
 **Requirement**: MOT-36, MOT-50
 
@@ -645,6 +666,9 @@ Proof: run unit | test_balanco.py::test_ciclo_cruza_o_ano PASSED
 **C61** - `clima_mudou` devolve `chuva_por_ano` com o total de chuva do ano civil para cada ano de 1995 a 2025 (31 itens) (MOT-61, Clima AC 8)
 Proof: run unit | test_clima.py::test_chuva_por_ano PASSED
 
+**C62** - Uma temporada que não termina até 2025-12-31 fica fora das médias e conta em `anos_sem_estacao` (MOT-62, Clima AC 9)
+Proof: run unit | test_clima.py::test_temporada_incompleta_fora_das_medias PASSED
+
 ---
 
 ## Handoff
@@ -665,7 +689,7 @@ Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
 Phase 1:  T1, T2, T3, T4, T5, T6   (fundação)
 Phase 2:  T7, T8, T9               (POWER, SoilGrids, país)
 Phase 3:  T10, T11, T12, T13       (balanço, FAOSTAT, adaptador, contexto)
-Phase 4:  T14, T15                 (clima mudou, janela)
+Phase 4:  T14, T15, T19            (clima mudou, janela, temporada incompleta)
 Phase 5:  T16, T17                 (ranking, planos)
 Phase 6:  T18                      (integração nos 4 pontos)
 ```
