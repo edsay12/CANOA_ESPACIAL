@@ -297,11 +297,12 @@ T17 → T18
 
 **Done when**:
 
-- [ ] Valores conferidos à mão em séries sintéticas (ex.: chuva diária = ETc → perda 0; sem chuva → perda limitada a Ky)
-- [ ] Gate quick passa; 7 testes
+- [x] Valores conferidos à mão em séries sintéticas (ex.: chuva diária = ETc → perda 0; sem chuva → perda limitada a Ky)
+- [x] Gate quick passa; 7 testes
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
@@ -643,7 +644,7 @@ Proof: run unit | test_clima.py::test_chuva_por_ano PASSED
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** Execução por sub-agentes, 1 por lote — user: "Sub-agentes, 1 por lote (Recommended)". Exclusões pendentes viram um commit separado antes da T1 — user: "Commit só das exclusões (Recommended)". Comandos de build/teste usam `.venv/` (Python 3.14, sem pip global). Execução pausada após T9: especificar todas as features primeiro, depois o time implementa — user: "lembrando que vamos especificar primeiro e depois cada um do time vai especificar". MOT-61 (`chuva_por_ano`) acrescentado à spec, à T14 e ao check C61 — user: "faz isso mesmo Recomendo acrescentar à spec do motor um critério novo, MOT-61".
-**Dispatched:** batch worker 1 (Phases 1–2, T1–T9) at HEAD 47f6c1b — returned (T1–T9 done, 24 unit tests green, HEAD eac16a1) · batch worker 2 NOT sent — execution paused by the user
+**Dispatched:** batch worker 1 (Phases 1–2, T1–T9) at HEAD 47f6c1b — returned (T1–T9 done, 24 unit tests green, HEAD eac16a1) · execução retomada 2026-11-15 — user: "Vamos começar a implementar nossa parte a parte de EDVAN" · batch worker 2 (Phases 3–4, T10–T15) at HEAD dc9334a — sent
 **Walked:** none
 
 ---
