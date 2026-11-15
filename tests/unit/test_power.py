@@ -29,7 +29,7 @@ def test_sem_cache_chama_api_e_salva(pasta_cache, monkeypatch):
     assert len(chamadas) == 1
     c = chamadas[0]
     assert c["url"] == "https://power.larc.nasa.gov/api/temporal/daily/point"
-    assert c["params"]["parameters"] == "PRECTOTCORR,T2M_MAX,T2M_MIN,ALLSKY_SFC_SW_DWN,GWETROOT"
+    assert c["params"]["parameters"] == "PRECTOTCORR,T2M_MAX,T2M_MIN,ALLSKY_SFC_SW_DWN,GWETROOT,RH2M,WS2M,PS"
     assert c["params"]["community"] == "AG"
     assert (c["params"]["start"], c["params"]["end"]) == ("19950101", "20251231")
     assert (c["params"]["latitude"], c["params"]["longitude"]) == (-17.8, -50.923)
@@ -50,9 +50,18 @@ def test_com_cache_nao_usa_rede(pasta_cache, monkeypatch):
 def test_colunas_um_dia_por_linha(pasta_cache, monkeypatch):
     rede(monkeypatch, Resposta(resposta_power(dias=4)))
     df = power.serie(1, 2)
-    assert list(df.columns) == ["data", "chuva", "tmax", "tmin", "rad", "umid_solo"]
+    assert list(df.columns) == ["data", "chuva", "tmax", "tmin", "rad", "umid_solo", "umid_rel", "vento", "pressao"]
     assert [d.strftime("%Y-%m-%d") for d in df["data"]] == ["1995-01-01", "1995-01-02", "1995-01-03", "1995-01-04"]
-    assert df.iloc[0][["chuva", "tmax", "tmin", "rad", "umid_solo"]].tolist() == [1.0, 2.0, 3.0, 4.0, 5.0]
+    assert df.iloc[0][["chuva", "tmax", "tmin", "rad", "umid_solo", "umid_rel", "vento", "pressao"]].tolist() == [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+
+
+def test_cache_antigo_sem_umidade_vento_pressao(pasta_cache, monkeypatch):
+    antigo = resposta_power(dias=2)
+    for p in ("RH2M", "WS2M", "PS"):
+        del antigo["properties"]["parameter"][p]
+    (pasta_cache / "power_1.00_2.00.json").write_text(json.dumps(antigo), encoding="utf-8")
+    df = power.serie(1, 2)
+    assert df[["umid_rel", "vento", "pressao"]].isna().all().all() and df["tmax"].tolist() == [2.0, 2.0]
 
 
 def test_menos_999_vira_nan(pasta_cache, monkeypatch):

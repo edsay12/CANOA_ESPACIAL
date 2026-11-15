@@ -3,7 +3,7 @@ import pytest
 
 from core import cache
 
-PARAMETROS = ["PRECTOTCORR", "T2M_MAX", "T2M_MIN", "ALLSKY_SFC_SW_DWN", "GWETROOT"]
+PARAMETROS = ["PRECTOTCORR", "T2M_MAX", "T2M_MIN", "ALLSKY_SFC_SW_DWN", "GWETROOT", "RH2M", "WS2M", "PS"]
 
 
 @pytest.fixture

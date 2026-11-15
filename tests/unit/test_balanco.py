@@ -42,6 +42,29 @@ def test_et0_hargreaves():
     assert balanco.et0_hargreaves(30, 20, 10) == pytest.approx(3.1129, abs=1e-4)
 
 
+def test_et0_penman_monteith():
+    # FAO-56 exemplo 18 (Bruxelas, 6 de julho, 50°48'N, 100 m): ET0 = 3,9 mm/dia.
+    # ea = 1,409 kPa; com es = 1,997 kPa isso é UR média de 70,56% (eq. 19).
+    ra_mj = balanco.ra_mm(50.8, 187) / 0.408
+    assert ra_mj == pytest.approx(41.09, abs=0.1)
+    et0 = balanco.et0_penman_monteith(21.5, 12.3, 70.56, 2.078, 100.1, 22.07, ra_mj)
+    assert et0 == pytest.approx(3.9, abs=0.1)
+    ra = balanco.ra_mm(50.8, 187)
+    assert balanco.et0_dia(21.5, 12.3, 70.56, 2.078, 100.1, 22.07, ra) == pytest.approx(et0)
+    # falta qualquer um dos 4 dados -> Hargreaves naquele dia
+    for i in range(4):
+        args = [70.56, 2.078, 100.1, 22.07]
+        args[i] = float("nan")
+        assert balanco.et0_dia(21.5, 12.3, *args, ra) == pytest.approx(balanco.et0_hargreaves(21.5, 12.3, ra))
+
+
+def test_simulacao_usa_penman_monteith_quando_ha_dados():
+    c = um_dia()
+    s = serie("2001-07-06", 1, tmax=21.5, tmin=12.3).assign(umid_rel=70.56, vento=2.078, pressao=100.1, rad=22.07)
+    r = balanco.simular_safra(s, c, 1000, date(2001, 7, 6), 50.8)
+    assert r["etc"] == pytest.approx(float(c["kc_ini"]) * 3.9, abs=0.05)
+
+
 def test_kc_por_fase():
     c = cultura_teste()  # fases 20/30/40/20, kc 0,3 / 1,2 / 0,6
     assert balanco.kc_diario(c, 1) == pytest.approx(0.3)

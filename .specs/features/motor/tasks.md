@@ -111,6 +111,10 @@ T16 → T18
 T17 → T18
 T19 → T18
 T20 → T18
+T7 → T21
+T10 → T21
+T14 → T22
+T17 → T22
 ```
 
 ---
@@ -482,6 +486,44 @@ T20 → T18
 
 ---
 
+### T21: ET0 Penman-Monteith
+
+**What**: POWER passa a baixar RH2M, WS2M e PS; o balanço usa FAO-56 Penman-Monteith e Hargreaves só no dia sem dado; cache dos 4 pontos baixado de novo (user: "Penman-Monteith FAO-56 (Recommended)").
+**Where**: `core/balanco.py`
+**Depends on**: T7, T10
+**Reuses**: `ra_mm`, `et0_hargreaves`
+**Requirement**: MOT-01, MOT-22
+
+**Done when**:
+
+- [x] Exemplo 18 da FAO-56 dá 3,9 mm/dia; dia sem dado usa Hargreaves
+- [x] Gate quick passa; 3 testes novos
+
+**Tests**: unit
+**Gate**: quick
+**Status**: ✅ Complete
+
+---
+
+### T22: Planos — data padrão e histórico sem parâmetros
+
+**What**: Data padrão dos planos = início médio da estação 2010–2025 (MOT-64); histórico com cultura sem parâmetros devolve planos sem comparação (MOT-65); retorno testado no ranking (achado do Verifier).
+**Where**: `core/modelo.py`
+**Depends on**: T14, T17
+**Reuses**: `clima.clima_mudou`
+**Requirement**: MOT-55, MOT-56, MOT-64, MOT-65
+
+**Done when**:
+
+- [x] Rio Verde com histórico Soja, Milho, Soja não dá erro
+- [x] Gate quick passa; 4 testes novos
+
+**Tests**: unit
+**Gate**: quick
+**Status**: ✅ Complete
+
+---
+
 ### T18: Integração nos 4 pontos da demo
 
 **What**: Testes com o cache versionado dos 4 pontos: tempo do ranking e dos planos, e o critério de sucesso de Rio Verde.
@@ -569,8 +611,8 @@ Proof: run unit | test_clima.py::test_resumo_no_idioma PASSED
 **C21** - `ranking_safra` simula cada candidata uma vez por ano de 1995 a 2024 na data pedida (MOT-21, Ranking AC 1)
 Proof: run unit | test_modelo.py::test_simula_1995_a_2024 PASSED
 
-**C22** - ET0 segue Hargreaves `0.0023 · Ra · (Tmean + 17.8) · √(Tmax − Tmin)` com Ra da FAO-56 eq. 21 × 0,408 (MOT-22, Ranking AC 2)
-Proof: run unit | test_balanco.py::test_et0_hargreaves PASSED
+**C22** - ET0 segue FAO-56 Penman-Monteith (exemplo 18: 3,9 mm/dia) e cai para Hargreaves `0.0023 · Ra · (Tmean + 17.8) · √(Tmax − Tmin)` no dia sem umidade, vento, pressão ou radiação (MOT-22, Ranking AC 2)
+Proof: run unit | test_balanco.py::test_et0_penman_monteith PASSED
 
 **C23** - Kc diário interpola `kc_ini`, `kc_mid`, `kc_fim` pelas 4 fases (MOT-23, Ranking AC 3)
 Proof: run unit | test_balanco.py::test_kc_por_fase PASSED
@@ -596,7 +638,7 @@ Proof: run unit | test_modelo.py::test_sem_retorno_reescala_pesos PASSED
 **C30** - `explicacao` no idioma pedido cita quebras em 1995–2009 e em 2010–2025 (MOT-30, Ranking AC 10)
 Proof: run unit | test_modelo.py::test_explicacao_antes_e_depois PASSED
 
-**C31** - Peso negativo ou todos os pesos zero levantam `ValueError` (MOT-31, Ranking AC 11)
+**C31** - Peso negativo, não finito (NaN, infinito) ou todos os pesos zero levantam `ValueError` (MOT-31, Ranking AC 11)
 Proof: run unit | test_validacao.py::test_pesos_invalidos PASSED
 
 **C32** - Pesos que não somam 1 são reescalados para somar 1 (MOT-32, Ranking AC 12)
@@ -669,10 +711,10 @@ Proof: run unit | test_clima.py::test_janela_fim_seguro PASSED
 Proof: run unit | test_clima.py::test_janela_sem_data_segura PASSED
 
 **C55** - Com linha no FAOSTAT, `retorno = produtividade × (1 − perda média) × preço` e `moeda = "USD"` (MOT-55, Retorno AC 1)
-Proof: run unit | test_global_ctx.py::test_retorno_faostat PASSED
+Proof: run unit | test_modelo.py::test_retorno_faostat PASSED
 
 **C56** - Sem linha para país e cultura, `retorno = None` (MOT-56, Retorno AC 2)
-Proof: run unit | test_global_ctx.py::test_sem_linha_retorno_none PASSED
+Proof: run unit | test_modelo.py::test_sem_linha_retorno_none PASSED
 
 **C57** - Com dados do adaptador Brasil, o contexto usa suas culturas e produtividade, `nivel_precisao = "municipal"` e `moeda = "BRL"` (MOT-57, Adaptador AC 1)
 Proof: run unit | test_contexto.py::test_adaptador_brasil_municipal PASSED
@@ -689,11 +731,17 @@ Proof: run unit | test_balanco.py::test_ciclo_cruza_o_ano PASSED
 **C61** - `clima_mudou` devolve `chuva_por_ano` com o total de chuva do ano civil para cada ano de 1995 a 2025 (31 itens) (MOT-61, Clima AC 8)
 Proof: run unit | test_clima.py::test_chuva_por_ano PASSED
 
-**C62** - Uma temporada que não termina até 2025-12-31 fica fora das médias e conta em `anos_sem_estacao` (MOT-62, Clima AC 9)
+**C62** - Temporada com menos de 30 dias de série depois do fim fica fora das médias e conta em `anos_sem_estacao` (MOT-62, Clima AC 9)
 Proof: run unit | test_clima.py::test_temporada_incompleta_fora_das_medias PASSED
 
 **C63** - Resultado com cultura `validado` ≠ true sai com `preliminar = true`; com todas validadas, `false` (MOT-63, Edge 4)
 Proof: run unit | test_modelo.py::test_marca_preliminar_quando_nao_validada PASSED
+
+**C64** - Sem `data_semeadura`, os planos semeiam no início médio da estação 2010–2025; no modo anual, 05-01 (N) / 11-01 (S) (MOT-64, Planos AC 9)
+Proof: run unit | test_modelo.py::test_planos_semeadura_padrao_inicio_das_chuvas PASSED
+
+**C65** - Histórico com cultura sem parâmetros devolve os planos sugeridos e o atual com risco/nota/retorno None e `sem_parametros = true` (MOT-65, Planos AC 10)
+Proof: run unit | test_modelo.py::test_planos_historico_com_cultura_sem_parametros PASSED
 
 ---
 
@@ -717,7 +765,7 @@ Phase 2:  T7, T8, T9               (POWER, SoilGrids, país)
 Phase 3:  T10, T11, T12, T13       (balanço, FAOSTAT, adaptador, contexto)
 Phase 4:  T14, T15, T19            (clima mudou, janela, temporada incompleta)
 Phase 5:  T16, T17                 (ranking, planos)
-Phase 6:  T20, T18                 (culturas FAO e preliminar, integração nos 4 pontos)
+Phase 6:  T20, T18, T21, T22       (culturas FAO e preliminar, integração, Penman-Monteith, planos)
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism.

@@ -24,6 +24,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | Clima futuro (CMIP6), SMAP, MODIS | Features futuras (Deferred Ideas) |
 | Culturas de ciclo longo (mandioca, cana) | Não cabem no modelo de safras de 3 anos |
 | Manejo dentro do talhão | Resolução do POWER (~50 km) não permite |
+| Duas estações chuvosas por ano (regiões bimodais, ex.: Nakuru) | Adiado; o motor usa a estação principal e o site diz isso no "Por que confiar" — user: "Deixar para depois (Recommended)" |
 
 ---
 
@@ -50,6 +51,11 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | Culturas não validadas (bloqueio da T18) | Milho e Sorgo granífero recebem os dias de estágio da FAO-56 Tab. 11 (linha citada em `fonte`), `validado=false`; só o Matheus marca `true`; todo resultado com cultura não validada sai com `preliminar = true` (MOT-63) | user: "Sim, os 3 passos (Recommended)" | y |
 | Data do critério de Rio Verde (T18) | 02-15 (era 03-15: em 03-15 milho e sorgo quebram em 29/30 anos, 97% × 97%; em 02-15, 87% × 70%) | user: "Mudar a data para 15/02 (Recommended)" | y |
 | Tempo limite do SoilGrids | 10 s (era 120 s: com o serviço fora, cada ranking esperava 166 s) | user: "Tempo limite de 10 s (Recommended)" | y |
+| ET0 (achado na revisão de 2026-11-15) | FAO-56 Penman-Monteith com RH2M, WS2M e PS do POWER; Hargreaves só no dia sem dado (Hargreaves superestimava 20–60% em verões úmidos: Ames jul 5,3 × 4,1 mm/d) | user: "Penman-Monteith FAO-56 (Recommended)" | y |
+| Data padrão dos planos | Início médio da estação 2010–2025; modo anual: 05-01 (N) / 11-01 (S) (MOT-64) | user: "Início médio das chuvas (Recommended)" | y |
+| Temporada incompleta (achado do Verifier) | Exige 30 dias de série depois do fim (MOT-62) | user: "30 dias de dados depois do fim (Recommended)" | y |
+| Histórico com cultura sem parâmetros (achado do Verifier) | Planos saem; o atual vem sem risco e com `sem_parametros = true` (MOT-65) | user: "Planos sem comparar (Recommended)" | y |
+| Leguminosa no plano (achado do Verifier) | `fixa_n` = true no CSV conta como leguminosa (MOT-45) | Coluna é true/false | n |
 | Temporada incompleta (lacuna achada na T14) | Temporada que não termina até 2025-12-31 fica fora das médias (MOT-62) | user: "Descartar incompletas (Recommended)" | y |
 | Solo nos 4 pontos da demo (T18) | Integração aceita `fonte = "padrão"` enquanto o SoilGrids responde 503; com cache de solo o teste continua valendo | user: "Aceitar 'padrão' por ora (Recommended)" | y |
 | Início da estação (lacuna achada na T14) | A busca inclui a própria data de referência; o dia de início é o 1º dos 3 dias com ≥ 20 mm; "30 dias seguintes" contam após o dia de início | Spec não fixava os limites | n |
@@ -74,7 +80,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 
 **Acceptance Criteria**:
 
-1. WHEN `power.serie(lat, lon)` is called for a point without a cache file THEN the system SHALL request the NASA POWER daily point API with parameters `PRECTOTCORR,T2M_MAX,T2M_MIN,ALLSKY_SFC_SW_DWN,GWETROOT`, `community=AG`, from 1995-01-01 to 2025-12-31, and save the response to `cache/power_{lat:.2f}_{lon:.2f}.json`.
+1. WHEN `power.serie(lat, lon)` is called for a point without a cache file THEN the system SHALL request the NASA POWER daily point API with parameters `PRECTOTCORR,T2M_MAX,T2M_MIN,ALLSKY_SFC_SW_DWN,GWETROOT,RH2M,WS2M,PS`, `community=AG`, from 1995-01-01 to 2025-12-31, and save the response to `cache/power_{lat:.2f}_{lon:.2f}.json`.
 2. WHEN `power.serie(lat, lon)` is called for a point whose cache file exists and is valid JSON THEN the system SHALL return the data without any network request.
 3. The system SHALL return from `power.serie` a DataFrame with one row per day and the columns `data, chuva, tmax, tmin, rad, umid_solo`.
 4. The system SHALL replace the NASA POWER fill value -999 with NaN in the returned DataFrame.
@@ -108,7 +114,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 6. IF fewer than 10 of the 31 years have a season start THEN the system SHALL return `modo = "anual"` and compare calendar-year rainfall and days with tmax ≥ 35 °C instead of season values.
 7. The system SHALL return a one-sentence `resumo` in the requested `idioma` stating the largest change between the two periods.
 8. The system SHALL return `chuva_por_ano` as a list of `{ano, chuva_mm}` with the calendar-year rainfall total for every year from 1995 to 2025.
-9. IF a season does not end by 2025-12-31 THEN the system SHALL exclude it from the period means and count it in `anos_sem_estacao`.
+9. IF the series has fewer than 30 days after a season's end THEN the system SHALL exclude that season from the period means and count it in `anos_sem_estacao`.
 
 **Independent Test**: Rodar para os 4 pontos e ver valores diferentes e um resumo em pt, en e es.
 
@@ -123,7 +129,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 **Acceptance Criteria**:
 
 1. WHEN `modelo.ranking_safra(lat, lon, data_semeadura, prioridades, idioma)` is called THEN the system SHALL simulate each candidate crop of the point (from `contexto`) once per year from 1995 to 2024, sowing on `data_semeadura` (MM-DD).
-2. The system SHALL compute daily reference evapotranspiration with Hargreaves: `ET0 = 0.0023 · Ra · (Tmean + 17.8) · √(Tmax − Tmin)`, with Ra in mm/day from latitude and day of year (FAO-56 eq. 21 × 0.408).
+2. The system SHALL compute daily reference evapotranspiration with FAO-56 Penman-Monteith (eq. 6) from Tmax, Tmin, RH2M, WS2M, PS and ALLSKY_SFC_SW_DWN, with Ra from latitude and day of year (FAO-56 eq. 21) and Rso = 0.75 · Ra; IF a day lacks RH2M, WS2M, PS or radiation THEN the system SHALL use Hargreaves `ET0 = 0.0023 · Ra · (Tmean + 17.8) · √(Tmax − Tmin)` (Ra × 0.408) for that day.
 3. The system SHALL interpolate the crop coefficient Kc daily across the crop's four stages (initial, development, mid, late) from `kc_ini`, `kc_mid`, `kc_fim`.
 4. The system SHALL run a daily soil-water balance with `TAW = cad_mm × raiz_m`, `RAW = p × TAW`, `Ks = 1` when depletion ≤ RAW and `Ks = (TAW − Dr) / (TAW − RAW)` otherwise, starting each season with depletion = 50% of TAW.
 5. The system SHALL estimate the yield loss of a season as `Ky × (1 − ΣETa / ΣETc)` clipped to [0, 1].
@@ -172,12 +178,14 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 
 1. WHEN `modelo.planos_rotacao(lat, lon, historico, prioridades, idioma)` is called THEN the system SHALL evaluate every 3-year sequence of the point's candidate second-season, winter and cover crops, using at most 5 candidates.
 2. The system SHALL simulate each plan over every 3-year window of consecutive years from 1995 to 2024 and set its `risco_pct` as the share of simulated seasons with failure.
-3. The system SHALL set a plan's `nota_solo` (1–5) as the mean of: diversity (1 family = 1, 2 families = 3, 3+ = 5), legume presence (any crop with `fixa_n` = 5, none = 1) and the mean `nota_solo` of its crops.
+3. The system SHALL set a plan's `nota_solo` (1–5) as the mean of: diversity (1 family = 1, 2 families = 3, 3+ = 5), legume presence (any crop with `fixa_n` = true: 5, none = 1) and the mean `nota_solo` of its crops.
 4. The system SHALL include the current plan built from the last 3 items of `historico`, flagged `atual = true`, even when it is not among the best.
 5. The system SHALL return the 3 best plans by `nota` plus the current plan.
 6. The system SHALL return for each non-current plan an `explicacao` in the requested `idioma` that states its difference from the current plan in risk points and in return.
 7. IF `historico` contains a crop not present in `culturas.csv` THEN the system SHALL raise `ValueError` naming the unknown crops.
 8. WHILE the point's data are cached the system SHALL return `planos_rotacao` in less than 10 s.
+9. WHEN `data_semeadura` is not given THEN the system SHALL sow the plans on the mean 2010–2025 season start of the point (`clima_mudou`), or on 05-01 in hemisphere N and 11-01 in hemisphere S when the point is in `modo = "anual"`.
+10. IF the last 3 items of `historico` include a known crop without model parameters THEN the system SHALL still return the suggested plans, return the current plan with `risco_pct`, `nota` and `retorno_ano` = None and `sem_parametros = true`, and list those crops in `culturas_ignoradas`.
 
 **Independent Test**: Rio Verde com histórico Milho, Milho, Milho mostra o plano atual e 3 alternativas com menos risco.
 
@@ -259,7 +267,7 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | MOT-19 | P1: Clima — modo anual | Design | Pending |
 | MOT-20 | P1: Clima — resumo no idioma | Design | Pending |
 | MOT-21 | P1: Ranking — simulação 1995–2024 | Design | Pending |
-| MOT-22 | P1: Ranking — ET0 Hargreaves | Design | Pending |
+| MOT-22 | P1: Ranking — ET0 Penman-Monteith (Hargreaves no dia sem dado) | Design | Pending |
 | MOT-23 | P1: Ranking — Kc por fase | Design | Pending |
 | MOT-24 | P1: Ranking — balanço hídrico | Design | Pending |
 | MOT-25 | P1: Ranking — perda FAO-33 | Design | Pending |
@@ -301,8 +309,10 @@ O agricultor precisa escolher uma rotação de culturas para os próximos anos s
 | MOT-61 | P1: Clima — chuva por ano (pedido pelo site, SITE-13) | Design | Pending |
 | MOT-62 | P1: Clima — temporada incompleta fora das médias | Design | Pending |
 | MOT-63 | Edge: resultado com cultura não validada marcado `preliminar` | Design | Pending |
+| MOT-64 | P2: Planos — data padrão = início médio das chuvas | Design | Pending |
+| MOT-65 | P2: Planos — histórico com cultura sem parâmetros | Design | Pending |
 
-**Coverage:** 63 total, 0 mapped to tasks, 60 unmapped ⚠️ (tasks come after approval)
+**Coverage:** 65 total, 0 mapped to tasks, 60 unmapped ⚠️ (tasks come after approval)
 
 ---
 
