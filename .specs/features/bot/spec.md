@@ -186,9 +186,9 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-06 | P1: Banco — cria tabelas | Execute | Verified |
 | BOT-07 | P1: Banco — conexão por operação | Execute | Verified |
 | BOT-08 | P1: Banco — dados só em db e fotos | Execute | Verified |
-| BOT-09 | P1: MCP — 8 ferramentas | Design | Pending |
+| BOT-09 | P1: MCP — 8 ferramentas | Execute | Verified |
 | BOT-10 | P1: MCP — resultado do motor | Execute | Verified |
-| BOT-11 | P1: MCP — token / 401 | Design | Pending |
+| BOT-11 | P1: MCP — token / 401 | Execute | Verified |
 | BOT-12 | P1: MCP — erros legíveis | Execute | Verified |
 | BOT-13 | P1: MCP — info_cultura | Execute | Verified |
 | BOT-14 | P1: MCP — cultura desconhecida | Execute | Verified |
