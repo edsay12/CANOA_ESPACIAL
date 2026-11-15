@@ -187,11 +187,11 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-07 | P1: Banco — conexão por operação | Execute | Verified |
 | BOT-08 | P1: Banco — dados só em db e fotos | Execute | Verified |
 | BOT-09 | P1: MCP — 8 ferramentas | Design | Pending |
-| BOT-10 | P1: MCP — resultado do motor | Design | Pending |
+| BOT-10 | P1: MCP — resultado do motor | Execute | Verified |
 | BOT-11 | P1: MCP — token / 401 | Design | Pending |
-| BOT-12 | P1: MCP — erros legíveis | Design | Pending |
-| BOT-13 | P1: MCP — info_cultura | Design | Pending |
-| BOT-14 | P1: MCP — cultura desconhecida | Design | Pending |
+| BOT-12 | P1: MCP — erros legíveis | Execute | Verified |
+| BOT-13 | P1: MCP — info_cultura | Execute | Verified |
+| BOT-14 | P1: MCP — cultura desconhecida | Execute | Verified |
 | BOT-15 | P1: Conversa — /start | Design | Pending |
 | BOT-16 | P1: Conversa — /start id | Design | Pending |
 | BOT-17 | P1: Conversa — id inválido | Design | Pending |
@@ -223,7 +223,7 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-43 | Edge: variáveis ausentes | Design | Pending |
 | BOT-44 | Edge: localização fora de terra | Design | Pending |
 | BOT-45 | Edge: resposta > 4096 | Design | Pending |
-| BOT-46 | Edge: aviso de parâmetro preliminar (motor MOT-63) | Design | Pending |
+| BOT-46 | Edge: aviso de parâmetro preliminar (motor MOT-63) | Execute | Verified |
 
 **Coverage:** 46 total, 0 mapped to tasks, 45 unmapped ⚠️ (tasks come after approval)
 
