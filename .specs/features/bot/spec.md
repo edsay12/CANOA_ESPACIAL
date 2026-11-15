@@ -192,13 +192,13 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-12 | P1: MCP — erros legíveis | Execute | Verified |
 | BOT-13 | P1: MCP — info_cultura | Execute | Verified |
 | BOT-14 | P1: MCP — cultura desconhecida | Execute | Verified |
-| BOT-15 | P1: Conversa — /start | Design | Pending |
-| BOT-16 | P1: Conversa — /start id | Design | Pending |
-| BOT-17 | P1: Conversa — id inválido | Design | Pending |
-| BOT-18 | P1: Conversa — localização | Design | Pending |
+| BOT-15 | P1: Conversa — /start | Execute | Verified |
+| BOT-16 | P1: Conversa — /start id | Execute | Verified |
+| BOT-17 | P1: Conversa — id inválido | Execute | Verified |
+| BOT-18 | P1: Conversa — localização | Execute | Verified |
 | BOT-19 | P1: Conversa — pergunta via Groq + MCP | Execute | Verified |
 | BOT-20 | P1: Conversa — prompt do sistema | Execute | Verified |
-| BOT-21 | P1: Conversa — sem fazenda | Design | Pending |
+| BOT-21 | P1: Conversa — sem fazenda | Execute | Verified |
 | BOT-22 | P1: Conversa — idioma | Design | Pending |
 | BOT-23 | P1: Conversa — memória de 6 | Execute | Verified |
 | BOT-24 | P1: Conversa — limite 20/h | Design | Pending |
@@ -210,19 +210,19 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-30 | P2: Fotos — situação hídrica | Design | Pending |
 | BOT-31 | P2: Fotos — confirme no campo | Design | Pending |
 | BOT-32 | P2: Fotos — sem fazenda | Design | Pending |
-| BOT-33 | P2: Alertas — inscrever | Design | Pending |
-| BOT-34 | P2: Alertas — entrada inválida | Design | Pending |
+| BOT-33 | P2: Alertas — inscrever | Execute | Verified |
+| BOT-34 | P2: Alertas — entrada inválida | Execute | Verified |
 | BOT-35 | P2: Alertas — 10:00 UTC | Design | Pending |
 | BOT-36 | P2: Alertas — balanço desde o plantio | Execute | Verified |
 | BOT-37 | P2: Alertas — regra de envio | Execute | Implementing |
 | BOT-38 | P2: Alertas — 7 dias | Execute | Implementing |
 | BOT-39 | P2: Alertas — série recente | Execute | Verified |
-| BOT-40 | P2: Alertas — /testar_alerta | Design | Pending |
+| BOT-40 | P2: Alertas — /testar_alerta | Execute | Verified |
 | BOT-41 | P2: Áudio — transcrever | Design | Pending |
 | BOT-42 | P2: Áudio — falha | Design | Pending |
 | BOT-43 | Edge: variáveis ausentes | Design | Pending |
-| BOT-44 | Edge: localização fora de terra | Design | Pending |
-| BOT-45 | Edge: resposta > 4096 | Design | Pending |
+| BOT-44 | Edge: localização fora de terra | Execute | Verified |
+| BOT-45 | Edge: resposta > 4096 | Execute | Verified |
 | BOT-46 | Edge: aviso de parâmetro preliminar (motor MOT-63) | Execute | Verified |
 
 **Coverage:** 46 total, 0 mapped to tasks, 45 unmapped ⚠️ (tasks come after approval)
