@@ -61,18 +61,18 @@ A primeira entrega do site público FARMBITS permite que a pessoa localize sua t
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| LOC-01 | Abertura desktop | Execute | Implementing |
-| LOC-02 | Abertura mobile | Execute | Implementing |
-| LOC-03 | Seleção no mapa | Execute | Implementing |
-| LOC-04 | Exemplos de demonstração | Execute | Implementing |
-| LOC-05 | Contexto do local | Execute | Implementing |
-| LOC-06 | Carregamento do contexto | Execute | Implementing |
-| LOC-07 | Botão de clima desabilitado | Execute | Implementing |
-| LOC-08 | Seletor de idioma | Execute | Implementing |
-| LOC-09 | Normalização de longitude | Execute | Implementing |
-| LOC-10 | Ponto fora de terra firme | Execute | Implementing |
-| LOC-11 | Indisponibilidade de dados | Execute | Implementing |
-| LOC-12 | Reuso de contexto na sessão | Execute | Implementing |
+| LOC-01 | Abertura desktop | Execute | Verified |
+| LOC-02 | Abertura mobile | Execute | Verified |
+| LOC-03 | Seleção no mapa | Execute | Verified |
+| LOC-04 | Exemplos de demonstração | Execute | Verified |
+| LOC-05 | Contexto do local | Execute | Verified |
+| LOC-06 | Carregamento do contexto | Execute | Verified |
+| LOC-07 | Botão de clima desabilitado | Execute | Verified |
+| LOC-08 | Seletor de idioma | Execute | Verified |
+| LOC-09 | Normalização de longitude | Execute | Verified |
+| LOC-10 | Ponto fora de terra firme | Execute | Verified |
+| LOC-11 | Indisponibilidade de dados | Execute | Verified |
+| LOC-12 | Reuso de contexto na sessão | Execute | Verified |
 
 ## Differences from the source
 

@@ -1,6 +1,6 @@
 # Site — Onde fica sua terra?
 
-**Data:** 2026-11-15  
+**Data:** 2026-11-15
 **Escopo:** primeira entrega do Site em Streamlit.
 
 ## Feature Boundary
