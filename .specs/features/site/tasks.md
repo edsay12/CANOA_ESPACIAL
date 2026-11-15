@@ -98,7 +98,7 @@ T3 → T13
 **Done when**:
 
 - [ ] Toda chave existe nos 3 idiomas (teste percorre as chaves)
-- [ ] Texto de limites contém os 4 itens de SITE-30
+- [ ] Texto de limites contém os 5 itens de SITE-30
 - [ ] Gate quick passa; 3 testes
 
 **Tests**: unit
@@ -408,7 +408,7 @@ Proof: run app | test_app.py::test_idioma_ingles_troca_textos_e_motor PASSED
 **C29** - O painel "Por que confiar" lista todas as `fontes` do motor (SITE-29, Confiar AC 1)
 Proof: run app | test_app.py::test_confiar_lista_fontes PASSED
 
-**C30** - O texto de limites cita dados regionais (~50 km), não diagnostica pragas/doenças, janela estimada pelo clima e não considera irrigação (SITE-30, Confiar AC 2)
+**C30** - O texto de limites cita dados regionais (~50 km), não diagnostica pragas/doenças, janela estimada pelo clima, não considera irrigação e usa só a estação principal (SITE-30, Confiar AC 2)
 Proof: run web | test_i18n.py::test_texto_limites PASSED
 
 **C31** - "NASA POWER" no painel aponta para `https://power.larc.nasa.gov/` (SITE-31, Confiar AC 3)

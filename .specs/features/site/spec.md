@@ -147,7 +147,7 @@ O motor calcula o risco climático e os planos de rotação, mas o técnico, o p
 **Acceptance Criteria**:
 
 1. WHEN a point is selected THEN the system SHALL show a collapsible panel "Por que confiar" listing every entry of the motor's `fontes`.
-2. The system SHALL show in that panel the limits text: dados regionais (~50 km); não diagnostica pragas ou doenças; janela de plantio estimada pelo clima; não considera irrigação.
+2. The system SHALL show in that panel the limits text: dados regionais (~50 km); não diagnostica pragas ou doenças; janela de plantio estimada pelo clima; não considera irrigação; usa só a estação chuvosa principal (regiões com duas estações, como perto do equador, aparecem com uma).
 3. The system SHALL link "NASA POWER" in that panel to `https://power.larc.nasa.gov/`.
 
 ---
