@@ -204,12 +204,12 @@ O produtor no campo não usa site nem mapa, mas usa o celular. O bot do Telegram
 | BOT-24 | P1: Conversa — limite 20/h | Design | Pending |
 | BOT-25 | P1: Conversa — falha da Groq | Execute | Verified |
 | BOT-26 | P1: Conversa — plano B local | Design | Pending |
-| BOT-27 | P2: Fotos — salvar | Design | Pending |
-| BOT-28 | P2: Fotos — descrever | Design | Pending |
-| BOT-29 | P2: Fotos — registrar | Design | Pending |
-| BOT-30 | P2: Fotos — situação hídrica | Design | Pending |
-| BOT-31 | P2: Fotos — confirme no campo | Design | Pending |
-| BOT-32 | P2: Fotos — sem fazenda | Design | Pending |
+| BOT-27 | P2: Fotos — salvar | Execute | Verified |
+| BOT-28 | P2: Fotos — descrever | Execute | Verified |
+| BOT-29 | P2: Fotos — registrar | Execute | Verified |
+| BOT-30 | P2: Fotos — situação hídrica | Execute | Verified |
+| BOT-31 | P2: Fotos — confirme no campo | Execute | Verified |
+| BOT-32 | P2: Fotos — sem fazenda | Execute | Verified |
 | BOT-33 | P2: Alertas — inscrever | Execute | Verified |
 | BOT-34 | P2: Alertas — entrada inválida | Execute | Verified |
 | BOT-35 | P2: Alertas — 10:00 UTC | Design | Pending |
