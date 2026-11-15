@@ -161,20 +161,22 @@ T4 → T14
 
 ### T4: Verificação de alertas e situação hídrica
 
+**Branch**: `feat/bot-alertas-situacao-hidrica-t4`
 **What**: `core/alertas.py` com `situacao` e `verificar` (balanço desde o plantio, Ks < 0,7 e ≤ 15 dias do meio, 7 dias entre envios, `forcar`).
 **Where**: `core/alertas.py`
 **Depends on**: T2, T3
 **Reuses**: `core/balanco.py` (motor T10), `core/culturas.py`, `core/solo.py`
 **Requirement**: BOT-36, BOT-37, BOT-38
 
-**Pré-requisito**: motor T10 (`core/balanco.py`). Até lá, os testes injetam um balanço falso.
+**Integração**: T14 encaminha os candidatos ao Telegram e registra o horário depois da entrega. `verificar` consulta o histórico de envios para aplicar o intervalo por fazenda.
 
 **Done when**:
 
-- [ ] Gate quick passa; 3 testes
+- [x] Gate quick passa com C36–C38 e testes de isolamento de falhas e do Ks calculado pelo motor
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 

@@ -55,7 +55,7 @@ sequenceDiagram
 | Validação | `core/validacao.py` (feito) | lat/lon e datas |
 | Exceções | `core/erros.py` (feito) | Mensagens de erro das ferramentas |
 | Culturas | `core/culturas.py` (feito) | `info_cultura`, validação de `/alerta` |
-| Balanço hídrico | `core/balanco.py` (motor T10, pendente) | `alertas` usa o mesmo Ks e as fases da cultura |
+| Balanço hídrico | `core/balanco.py` (motor T10) | `alertas` usa o mesmo Ks e as fases da cultura |
 | Contratos do motor | `core/contexto.py`, `core/clima.py`, `core/modelo.py` (motor T13–T17, pendentes) | Ferramentas do MCP |
 
 ### Integration Points
@@ -88,6 +88,7 @@ sequenceDiagram
 - **Location**: `core/alertas.py`
 - **Interfaces**: `situacao(lat, lon, cultura, data_plantio, hoje) -> {ks, dias_ate_meio, alerta: bool}` · `verificar(db, hoje, forcar=False, chat_id=None) -> list[{chat_id, alerta_id, mensagem_chave, valores}]`
 - **Dependencies**: `core.recente`, `core.balanco`, `core.solo`, `core.culturas`, `core.db`
+- **Seleção**: o balanço parte do plantio e termina no último dia com temperaturas observadas. A distância até a fase de meio usa a data da verificação. O intervalo por fazenda considera o último envio de todas as inscrições, inclusive as desativadas. `forcar` ignora o intervalo e avalia todas as inscrições ativas do chat. O processo que entrega o alerta registra o envio no banco após sucesso.
 
 ### bot_logica.ferramentas
 - **Purpose**: As 8 ferramentas como funções que devolvem resultado ou erro legível, e seus schemas JSON (usados pelo MCP e pelo plano B).
