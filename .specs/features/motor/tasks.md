@@ -548,13 +548,13 @@ T17 → T22
 
 ## Checks
 
-**C1** - Sem cache, `serie` chama o POWER com os 5 parâmetros, `community=AG`, 19950101–20251231, e grava `cache/power_{lat:.2f}_{lon:.2f}.json` (MOT-01, AC 1)
+**C1** - Sem cache, `serie` chama o POWER com os 8 parâmetros, `community=AG`, 19950101–20251231, e grava `cache/power_{lat:.2f}_{lon:.2f}.json` (MOT-01, AC 1)
 Proof: run unit | test_power.py::test_sem_cache_chama_api_e_salva PASSED
 
 **C2** - Com cache válido, `serie` não faz nenhuma requisição (MOT-02, AC 2)
 Proof: run unit | test_power.py::test_com_cache_nao_usa_rede PASSED
 
-**C3** - O DataFrame tem uma linha por dia e as colunas `data, chuva, tmax, tmin, rad, umid_solo` (MOT-03, AC 3)
+**C3** - O DataFrame tem uma linha por dia e as colunas `data, chuva, tmax, tmin, rad, umid_solo, umid_rel, vento, pressao` (MOT-03, AC 3)
 Proof: run unit | test_power.py::test_colunas_um_dia_por_linha PASSED
 
 **C4** - O valor -999 do POWER vira NaN (MOT-04, AC 4)
