@@ -27,8 +27,16 @@ def _brasil():
 
 
 def test_context_shows_country_coordinates_and_precision(monkeypatch):
-    tela = _app(monkeypatch, lambda *_: _brasil())
-    assert tela.success[0].value == "Brasil · -17.80, -50.92 · Dados municipais"
+    for nivel, esperado in (
+        ("municipal", "Dados municipais"),
+        ("pais", "Dados do país"),
+        ("clima", "Estimado pelo clima"),
+    ):
+        tela = _app(
+            monkeypatch,
+            lambda *_, nivel=nivel: {"pais": {"nome": "Brasil"}, "nivel_precisao": nivel},
+        )
+        assert tela.success[0].value == f"Brasil · -17.80, -50.92 · {esperado}"
 
 
 def test_off_land_point_displays_error_and_allows_new_location(monkeypatch):
