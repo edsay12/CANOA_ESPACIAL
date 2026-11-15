@@ -10,12 +10,15 @@ from urllib.parse import urlsplit
 import uvicorn
 from dotenv import load_dotenv
 from mcp.server.mcpserver import MCPServer
-from mcp.server.transport_security import TransportSecuritySettings
+from mcp.server.transport_security import (
+    TransportSecurityMiddleware,
+    TransportSecuritySettings,
+)
 from mcp.types import CallToolResult, TextContent, Tool
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 
 from bot_logica.ferramentas import FERRAMENTAS, executar
 
@@ -49,14 +52,26 @@ def criar_servidor_mcp():
 
 
 class _BearerTokenMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app, token: str):
+    def __init__(
+        self, app, token: str, seguranca_sem_stream: TransportSecurityMiddleware | None = None
+    ):
         super().__init__(app)
         self._esperado = f"Bearer {token}".encode()
+        self._seguranca_sem_stream = seguranca_sem_stream
 
     async def dispatch(self, request: Request, call_next):
         recebido = request.headers.get("authorization", "").encode()
         if not hmac.compare_digest(recebido, self._esperado):
             return JSONResponse({"erro": "Não autorizado"}, status_code=401)
+        if (
+            self._seguranca_sem_stream is not None
+            and request.method == "GET"
+            and request.url.path == "/mcp"
+        ):
+            rejeicao = await self._seguranca_sem_stream.validate_request(request)
+            if rejeicao is not None:
+                return rejeicao
+            return Response(status_code=405, headers={"Allow": "POST"})
         return await call_next(request)
 
 
@@ -95,10 +110,18 @@ def criar_app(token: str, *, porta: int = 8000) -> Starlette:
     if not token:
         raise ValueError("MCP_TOKEN não pode ser vazio.")
     mcp = criar_servidor_mcp()
+    sem_sessao = os.environ.get("MCP_STATELESS_HTTP", "").strip().lower() == "true"
+    seguranca = _seguranca(os.environ.get("MCP_PUBLIC_URL", "").strip(), porta)
     app = mcp.streamable_http_app(
-        transport_security=_seguranca(os.environ.get("MCP_PUBLIC_URL", "").strip(), porta)
+        transport_security=seguranca,
+        json_response=sem_sessao,
+        stateless_http=sem_sessao,
     )
-    app.add_middleware(_BearerTokenMiddleware, token=token)
+    app.add_middleware(
+        _BearerTokenMiddleware,
+        token=token,
+        seguranca_sem_stream=TransportSecurityMiddleware(seguranca) if sem_sessao else None,
+    )
     return app
 
 
