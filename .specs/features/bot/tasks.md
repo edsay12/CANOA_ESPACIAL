@@ -217,10 +217,11 @@ T4 → T14
 
 **Done when**:
 
-- [ ] Gate quick passa; 1 teste
+- [x] Gate quick passa; 2 testes
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
