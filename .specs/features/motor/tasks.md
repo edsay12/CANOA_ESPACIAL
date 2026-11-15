@@ -354,11 +354,12 @@ T17 → T18
 
 **Done when**:
 
-- [ ] Fontes externas substituídas por fakes nos testes
-- [ ] Gate quick passa; 7 testes
+- [x] Fontes externas substituídas por fakes nos testes
+- [x] Gate quick passa; 7 testes
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
