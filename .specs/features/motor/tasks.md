@@ -335,11 +335,12 @@ T17 → T18
 
 **Done when**:
 
-- [ ] Sem arquivo devolve None; com fixture devolve dados
-- [ ] Gate quick passa; 2 testes
+- [x] Sem arquivo devolve None; com fixture devolve dados
+- [x] Gate quick passa; 2 testes
 
 **Tests**: unit
 **Gate**: quick
+**Status**: ✅ Complete
 
 ---
 
