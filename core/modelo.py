@@ -8,16 +8,15 @@ from itertools import product
 
 import pandas as pd
 
-from core import balanco, contexto, culturas, power, solo, textos, validacao
+from core import balanco, clima, contexto, culturas, power, solo, textos, validacao
 
 ANOS = range(1995, 2025)
 ANTES, DEPOIS = range(1995, 2010), range(2010, 2025)
 PAPEIS_ROTACAO = {"Segunda safra", "Inverno", "Cobertura"}
 MAX_CANDIDATAS = 5
 JANELAS = range(ANOS[0], ANOS[-1] - 1)  # 1995–2022: cada janela cobre 3 anos até 2024
-# SPEC_DEVIATION: a spec não diz a data de semeadura dos planos; padrão 03-01 (safrinha do Cerrado, igual ao site)
-# no hemisfério S e 09-01 (mesma época, 6 meses depois) no N; o chamador pode passar `data_semeadura`.
-SEMEADURA_PLANOS = {"S": "03-01", "N": "09-01"}
+# MOT-64: sem `data_semeadura`, os planos semeiam no início médio da estação 2010–2025; no modo anual, estas datas
+SEMEADURA_SEM_ESTACAO = {"N": "05-01", "S": "11-01"}
 
 
 def _perdas(serie, c, cad_mm, lat, mes, dia):
@@ -95,6 +94,29 @@ def _nota_solo_plano(cs):
     return round((diversidade + leguminosa + media) / 3, 2)
 
 
+def _semeadura_padrao(lat, lon, hemisferio):
+    """MOT-64: início médio da estação 2010–2025 do ponto; no modo anual, 05-01 (N) ou 11-01 (S)."""
+    c = clima.clima_mudou(lat, lon)
+    inicio = c["periodos"]["2010-2025"].get("inicio") if c["modo"] == "estacao" else None
+    return inicio or SEMEADURA_SEM_ESTACAO[hemisferio]
+
+
+def _avaliar(plano, atual, perdas, retorno, todas, ctx):
+    quebras = sum(perdas[c][w + k] > balanco.LIMITE_QUEBRA for w in JANELAS for k, c in enumerate(plano))
+    rets = [retorno[c] for c in plano]
+    return {
+        "plano": list(plano),
+        "risco_pct": round(100 * quebras / (3 * len(JANELAS))),
+        "nota_solo": _nota_solo_plano([todas[c] for c in plano]),
+        "retorno_ano": None if None in rets else sum(rets) / 3,
+        "moeda": ctx["moeda"],
+        "atual": tuple(plano) == atual,
+        "preliminar": any(culturas.preliminar(todas[c]) for c in plano),
+        "sem_parametros": False,
+        "explicacao": None,
+    }
+
+
 def planos_rotacao(lat, lon, historico, prioridades=None, idioma="pt", data_semeadura=None):
     todas = culturas.carregar()
     desconhecidas = [c for c in historico if c not in todas]
@@ -103,44 +125,42 @@ def planos_rotacao(lat, lon, historico, prioridades=None, idioma="pt", data_seme
     if len(historico) < 3:
         raise ValueError("historico precisa de pelo menos 3 safras")
     atual = tuple(historico[-3:])
-    sem_params = sorted({c for c in atual if not culturas.completa(todas[c])})
-    if sem_params:
-        raise ValueError(f"culturas do histórico sem parâmetros do modelo: {sem_params}")
+    sem_params = sorted({c for c in atual if not culturas.completa(todas[c])})  # MOT-65: planos saem sem comparar
     pesos = validacao.pesos(prioridades)
     if data_semeadura is not None:
         validacao.data_mmdd(data_semeadura)
     ctx = contexto.contexto(lat, lon)
-    mes, dia = validacao.data_mmdd(data_semeadura or SEMEADURA_PLANOS[ctx["pais"]["hemisferio"]])
+    mes, dia = validacao.data_mmdd(data_semeadura or _semeadura_padrao(lat, lon, ctx["pais"]["hemisferio"]))
     serie = power.serie(lat, lon)
     cad = solo.agua_disponivel(lat, lon)["cad_mm"]
 
     papel = [n for n in ctx["culturas"] if todas[n].get("papel") in PAPEIS_ROTACAO]
     ignoradas = [n for n in papel if not culturas.completa(todas[n])]
+    ignoradas += [n for n in sem_params if n not in ignoradas]
     candidatas = [n for n in papel if n not in ignoradas][:MAX_CANDIDATAS]
 
-    perdas = {n: _perdas(serie, todas[n], cad, lat, mes, dia) for n in dict.fromkeys([*candidatas, *atual])}  # uma vez por (cultura, ano)
+    perdas = {n: _perdas(serie, todas[n], cad, lat, mes, dia) for n in dict.fromkeys([*candidatas, *atual]) if n not in sem_params}  # uma vez por (cultura, ano)
     retorno = {n: _retorno(ctx, n, sum(p.values()) / len(p)) for n, p in perdas.items()}
 
     planos = []
     combinacoes = list(product(candidatas, repeat=3))
-    for plano in combinacoes + ([] if atual in combinacoes else [atual]):
-        quebras = sum(perdas[c][w + k] > balanco.LIMITE_QUEBRA for w in JANELAS for k, c in enumerate(plano))
-        rets = [retorno[c] for c in plano]
-        planos.append({
-            "plano": list(plano),
-            "risco_pct": round(100 * quebras / (3 * len(JANELAS))),
-            "nota_solo": _nota_solo_plano([todas[c] for c in plano]),
-            "retorno_ano": None if None in rets else sum(rets) / 3,
-            "moeda": ctx["moeda"],
-            "atual": plano == atual,
-            "preliminar": any(culturas.preliminar(todas[c]) for c in plano),
-            "explicacao": None,
-        })
-    _notas(planos, pesos, "retorno_ano")
+    for plano in combinacoes:
+        planos.append(_avaliar(plano, atual, perdas, retorno, todas, ctx))
+    if atual not in combinacoes:
+        if sem_params:
+            planos.append({"plano": list(atual), "risco_pct": None, "nota": None, "nota_solo": _nota_solo_plano([todas[c] for c in atual]),
+                           "retorno_ano": None, "moeda": ctx["moeda"], "atual": True, "preliminar": True, "sem_parametros": True, "explicacao": None})
+        else:
+            planos.append(_avaliar(atual, atual, perdas, retorno, todas, ctx))
+    _notas([p for p in planos if not p["sem_parametros"]], pesos, "retorno_ano")
     plano_atual = next(p for p in planos if p["atual"])
-    itens = sorted([p for p in planos if not p["atual"]][:3] + [plano_atual], key=lambda p: p["nota"], reverse=True)
+    melhores = sorted([p for p in planos if not p["atual"]], key=lambda p: p["nota"], reverse=True)[:3]
+    itens = sorted(melhores + [plano_atual], key=lambda p: -1 if p["nota"] is None else p["nota"], reverse=True)
     for p in itens:
         if p["atual"]:
+            continue
+        if plano_atual["sem_parametros"]:
+            p["explicacao"] = textos.t("explicacao_plano_sem_atual", idioma, risco_abs=p["risco_pct"])
             continue
         risco = p["risco_pct"] - plano_atual["risco_pct"]
         if p["retorno_ano"] is None or plano_atual["retorno_ano"] is None:

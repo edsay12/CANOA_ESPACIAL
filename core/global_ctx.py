@@ -19,10 +19,3 @@ def linhas_pais(iso2, path=None):
     df = df[df["iso2"] == iso2]
     return {r["cultura"]: {"produtividade_t_ha": float(r["produtividade_t_ha"]), "preco_usd_t": float(r["preco_usd_t"])} for r in df.to_dict("records")}
 
-
-def retorno(iso2, cultura, perda_media, path=None):
-    """(produtividade × (1 − perda média) × preço, "USD"), ou (None, None) sem linha."""
-    linha = linhas_pais(iso2, path).get(cultura)
-    if linha is None:
-        return None, None
-    return linha["produtividade_t_ha"] * (1 - perda_media) * linha["preco_usd_t"], "USD"

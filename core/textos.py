@@ -12,6 +12,7 @@ TEXTOS = {
         "explicacao_safra": "faltou água em {depois} de {n_depois} anos desde 2010; antes eram {antes} de {n_antes}",
         "explicacao_plano": "{risco:+d} pontos de risco e {retorno:+.0f} {moeda}/ano de retorno frente ao plano atual",
         "explicacao_plano_sem_retorno": "{risco:+d} pontos de risco frente ao plano atual",
+        "explicacao_plano_sem_atual": "{risco_abs}% de risco de quebra; o plano atual não tem parâmetros para comparar",
     },
     "en": {
         "resumo_clima": "{variavel} went from {antes} in 1995–2009 to {depois} in 2010–2025.",
@@ -24,6 +25,7 @@ TEXTOS = {
         "explicacao_safra": "water fell short in {depois} of {n_depois} years since 2010; before it was {antes} of {n_antes}",
         "explicacao_plano": "{risco:+d} risk points and {retorno:+.0f} {moeda}/year of return versus the current plan",
         "explicacao_plano_sem_retorno": "{risco:+d} risk points versus the current plan",
+        "explicacao_plano_sem_atual": "{risco_abs}% failure risk; the current plan has no parameters to compare",
     },
     "es": {
         "resumo_clima": "{variavel} pasó de {antes} en 1995–2009 a {depois} en 2010–2025.",
@@ -36,6 +38,7 @@ TEXTOS = {
         "explicacao_safra": "faltó agua en {depois} de {n_depois} años desde 2010; antes eran {antes} de {n_antes}",
         "explicacao_plano": "{risco:+d} puntos de riesgo y {retorno:+.0f} {moeda}/año de retorno frente al plan actual",
         "explicacao_plano_sem_retorno": "{risco:+d} puntos de riesgo frente al plan actual",
+        "explicacao_plano_sem_atual": "{risco_abs}% de riesgo de pérdida; el plan actual no tiene parámetros para comparar",
     },
 }
 
