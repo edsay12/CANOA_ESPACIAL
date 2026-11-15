@@ -47,8 +47,14 @@ class Audio:
         self.transcrever = transcrever
 
     def tratar_voz(self, chat_id, conteudo, lang, nome_arquivo=None):
+        return self.processar_voz(chat_id, conteudo, lang, nome_arquivo)[1]
+
+    def processar_voz(
+        self, chat_id, conteudo, lang, nome_arquivo=None, limite_verificado=False
+    ):
+        """Retorna transcrição e resposta sem executar o fluxo duas vezes."""
         if not conteudo:
-            return [t("audio_falhou", lang)]
+            return None, [t("audio_falhou", lang)]
         try:
             texto = (
                 self.transcrever(conteudo)
@@ -58,5 +64,10 @@ class Audio:
             if not isinstance(texto, str) or not texto.strip():
                 raise ValueError("Transcrição vazia")
         except (openai.APIError, TimeoutError, OSError, RuntimeError, ValueError):
-            return [t("audio_falhou", lang)]
-        return self.conversa.texto(chat_id, texto.strip(), lang)
+            return None, [t("audio_falhou", lang)]
+        texto = texto.strip()
+        if limite_verificado:
+            return texto, self.conversa.texto(
+                chat_id, texto, lang, limite_verificado=True
+            )
+        return texto, self.conversa.texto(chat_id, texto, lang)
