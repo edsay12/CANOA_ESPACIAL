@@ -34,4 +34,12 @@
 - **Date**: 2026-11-14
 - **Status**: active
 
+### AD-005
+- **Decision**: Nomear novas branches e escrever mensagens de commit em inglês.
+- **Reason**: Convenção solicitada pelo usuário para todo o projeto.
+- **Trade-off**: O histórico reúne mensagens em português e em inglês.
+- **Scope**: branches e commits do projeto
+- **Date**: 2026-11-15
+- **Status**: active
+
 ## Handoff

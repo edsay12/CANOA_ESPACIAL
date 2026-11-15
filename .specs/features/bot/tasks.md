@@ -203,6 +203,7 @@ T4 → T14
 
 ### T6: Servidor MCP com token
 
+**Fix branch**: `fix/mcp-tool-contract-and-security`
 **What**: `mcp_server.py` com `MCPServer` (mcp 2.3), as 8 ferramentas de T5, `streamable_http_app()` atrás de middleware `Authorization: Bearer <MCP_TOKEN>`, `main()` com uvicorn.
 **Where**: `mcp_server.py`
 **Depends on**: T5, T1
@@ -211,11 +212,12 @@ T4 → T14
 
 **Done when**:
 
-- [ ] `TestClient` lista as 8 ferramentas com token e recebe 401 sem token e com token errado
-- [ ] Gate full passa; 2 testes
+- [x] `TestClient` lista as 8 ferramentas com token e recebe 401 sem token e com token errado
+- [x] Gate full passa com seis testes de catálogo, despacho, autenticação, transporte e configuração
 
 **Tests**: integration
 **Gate**: full
+**Status**: ✅ Complete
 
 ---
 
