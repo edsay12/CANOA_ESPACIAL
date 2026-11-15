@@ -97,8 +97,8 @@ T4 → T5
 
 **Done when**:
 
-- [ ] O painel apresenta país, coordenadas e selo quando recebe contexto e oferece as respostas aprovadas para fora de terra firme e indisponibilidade.
-- [ ] Gate quick passa com pelo menos 26 testes.
+- [x] O painel apresenta país, coordenadas e selo quando recebe contexto e oferece as respostas aprovadas para fora de terra firme e indisponibilidade.
+- [x] Gate quick passa com pelo menos 26 testes.
 
 **Tests**: Integração isolada em `tests/web/test_localizacao.py`, com pelo menos três testes novos para sucesso e falhas do motor.  
 **Gate**: Quick  
