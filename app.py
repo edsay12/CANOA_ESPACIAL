@@ -378,23 +378,24 @@ def main() -> None:
 
     if ctx is not None and _tem_motor_completo(servico):
         lat, lon = st.session_state.ponto
-        aba_clima, aba_plantar, aba_planos = st.tabs(
-            [
-                t("aba_clima", idioma),
-                t("aba_plantar", idioma),
-                t("aba_planos", idioma),
-            ]
-        )
-        with aba_clima:
-            _renderizar_aba_clima(servico, lat, lon, idioma)
-        with aba_plantar:
-            pesos = _renderizar_aba_plantar(servico, lat, lon, idioma)
-        with aba_planos:
-            candidatas = [str(c) for c in ctx.get("culturas", [])]
-            _renderizar_aba_planos(
-                servico, lat, lon, candidatas, pesos, idioma
+        with st.container(key="painel-resultados"):
+            aba_clima, aba_plantar, aba_planos = st.tabs(
+                [
+                    t("aba_clima", idioma),
+                    t("aba_plantar", idioma),
+                    t("aba_planos", idioma),
+                ]
             )
-        _renderizar_por_que_confiar(ctx, idioma)
+            with aba_clima:
+                _renderizar_aba_clima(servico, lat, lon, idioma)
+            with aba_plantar:
+                pesos = _renderizar_aba_plantar(servico, lat, lon, idioma)
+            with aba_planos:
+                candidatas = [str(c) for c in ctx.get("culturas", [])]
+                _renderizar_aba_planos(
+                    servico, lat, lon, candidatas, pesos, idioma
+                )
+            _renderizar_por_que_confiar(ctx, idioma)
 
 
 
