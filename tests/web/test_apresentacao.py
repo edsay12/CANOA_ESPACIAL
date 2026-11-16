@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from core.erros import ErroFonteDados, ErroPontoInvalido
 from web.apresentacao import (
     aviso_anos_sem_estacao,
     cards_clima,
     cards_planos,
     cards_ranking,
     dados_grafico,
+    marcadores,
+    mensagem_erro,
+    popup,
     prioridades_vazias,
+    selo,
 )
 
 
@@ -253,3 +260,47 @@ def test_cards_planos_campos() -> None:
         c["aviso_preliminar"]
         == "parâmetros genéricos da FAO, não calibrados para a região"
     )
+
+
+def test_selo_niveis_de_precisao() -> None:
+    """SITE-05: Traduz municipal, pais e clima nos idiomas."""
+    assert selo("municipal", "pt") == "Dados municipais"
+    assert selo("pais", "en") == "Country data"
+    assert selo("clima", "es") == "Estimado por el clima"
+
+
+def test_mensagem_erro_motor() -> None:
+    """SITE-07/08: Converte ErroPontoInvalido e ErroFonteDados."""
+    assert "terra firme" in mensagem_erro(ErroPontoInvalido("mar"), "pt")
+    assert "unavailable" in mensagem_erro(ErroFonteDados("timeout"), "en")
+
+
+def test_marcadores_observacoes() -> None:
+    """C32 (SITE-32): Gera um marcador por observacao valida."""
+    obs = [
+        {"lat": -17.8, "lon": -50.92, "texto": "Folha seca"},
+        {"lat": -0.3, "lon": 36.07, "texto": "Solo bom"},
+    ]
+    res = marcadores(obs)
+    assert len(res) == 2
+    assert res[0]["lat"] == -17.8
+    assert res[0]["lon"] == -50.92
+    assert "Folha seca" in res[0]["popup"]
+
+
+def test_popup_observacao_campos(tmp_path: Path) -> None:
+    """C33 (SITE-33): Popup contem data, texto, descricao_ia e miniatura."""
+    foto = tmp_path / "campo.png"
+    foto.write_bytes(b"\x89PNG\r\n\x1a\n")
+    html_popup = popup(
+        {
+            "data": "2026-11-10",
+            "texto": "Milho sentindo seca",
+            "descricao_ia": "Estresse hidrico moderado",
+            "foto_path": str(foto),
+        }
+    )
+    assert "2026-11-10" in html_popup
+    assert "Milho sentindo seca" in html_popup
+    assert "Estresse hidrico moderado" in html_popup
+    assert "data:image/png;base64," in html_popup
