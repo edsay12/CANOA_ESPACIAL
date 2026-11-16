@@ -2,7 +2,9 @@
 
 import logging
 import os
+import re
 import threading
+from base64 import b64encode
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -27,6 +29,65 @@ from web.localizacao import exibir_contexto
 from web.mapa import clicar, imagem, mapa_mundi, marcador
 from web.pontos import DEMO
 from web.servico import Servico
+
+
+def _svg_img(corpo: str, cor: str, tamanho: int = 20) -> str:
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{tamanho}" height="{tamanho}" '
+        f'viewBox="0 0 24 24" fill="none" stroke="{cor}" stroke-width="2" '
+        f'stroke-linecap="round" stroke-linejoin="round">{corpo}</svg>'
+    )
+    b64 = b64encode(svg.encode("utf-8")).decode("ascii")
+    return f'<img src="data:image/svg+xml;base64,{b64}" alt="" width="{tamanho}" height="{tamanho}">'
+
+
+_SVGS = {
+    "chuva": _svg_img(
+        '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>',
+        "#256385",
+        20,
+    ),
+    "calendario": _svg_img(
+        '<rect x="3" y="4" width="18" height="18" rx="2"/>'
+        '<line x1="16" y1="2" x2="16" y2="6"/>'
+        '<line x1="8" y1="2" x2="8" y2="6"/>'
+        '<line x1="3" y1="10" x2="21" y2="10"/>',
+        "#1d6b43",
+        20,
+    ),
+    "sol": _svg_img(
+        '<circle cx="12" cy="12" r="4"/>'
+        '<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41'
+        'M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+        "#b87324",
+        20,
+    ),
+    "calor": _svg_img(
+        '<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>',
+        "#9e331e",
+        20,
+    ),
+    "broto": _svg_img(
+        '<path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/>'
+        '<path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 '
+        '2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 '
+        '1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>',
+        "#1d6b43",
+        20,
+    ),
+    "escudo": _svg_img(
+        '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+        "#1d6b43",
+        16,
+    ),
+    "moeda": _svg_img(
+        '<circle cx="12" cy="12" r="9"/>'
+        '<path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4h-2a2 2 0 0 1-1.8-1"/>'
+        '<path d="M12 6v2m0 8v2"/>',
+        "#1d6b43",
+        16,
+    ),
+}
 
 
 def icone(nome: str) -> str:
@@ -54,7 +115,6 @@ def ir_para_etapa(indice: int) -> None:
         st.session_state.ponto = next(iter(DEMO.values()))
         st.session_state.ultimo_clique = None
         st.session_state.versao_mapa = st.session_state.get("versao_mapa", 0) + 1
-
 
 
 @st.cache_resource
@@ -91,38 +151,68 @@ def _tem_motor_completo(servico: object) -> bool:
 
 
 def _pontos_nivel(valor_pct: float, inverter: bool = False) -> str:
-    """Gera 5 pontos visuais (cheios/vazios) para representar nivel de 0 a 100."""
     n = max(1, min(5, round(valor_pct / 20)))
     classe = "ponto-alerta" if inverter and n >= 3 else "ponto-ok"
     bolas = "".join(
         f'<span class="ponto-indicador {classe if i < n else ""}"></span>'
         for i in range(5)
     )
-    return f'<span class=" fileira-pontos">{bolas}</span>'
+    return f'<span class="fileira-pontos">{bolas}</span>'
+
+
+def _extrair_num(texto: str) -> float | None:
+    limpo = texto.replace(".", "").replace(",", ".")
+    m = re.search(r"[-+]?\d+(?:\.\d+)?", limpo)
+    return float(m.group(0)) if m else None
+
+
+def _barras_comparacao(antes_txt: str, depois_txt: str) -> tuple[int, int]:
+    v1 = _extrair_num(antes_txt)
+    v2 = _extrair_num(depois_txt)
+    if v1 is None or v2 is None or max(abs(v1), abs(v2)) == 0:
+        return 75, 75
+    topo = max(abs(v1), abs(v2))
+    p1 = max(18, min(100, round((abs(v1) / topo) * 100)))
+    p2 = max(18, min(100, round((abs(v2) / topo) * 100)))
+    return p1, p2
 
 
 def _html_card_clima(card: dict[str, str], idx: int) -> str:
-    icones_clima = ("🌧️", "🌱", "🌾", "☀️", "🌡️")
-    ic = icones_clima[idx % len(icones_clima)]
+    chaves_svg = ("chuva", "calendario", "calendario", "sol", "calor")
+    svg = _SVGS[chaves_svg[idx % len(chaves_svg)]]
     dif = escape(card["diferenca"])
-    negativo = dif.startswith("-") or "d" in dif or "+" in dif
-    classe_pilula = "pilula-alerta" if negativo else "pilula-neutra"
+    # Chuva menor (-), inicio atrasado (+d), fim adiantado (-d), mais veranicos (+) ou calor (+) = alerta
+    eh_alerta = (
+        (idx == 0 and dif.startswith("-"))
+        or (idx == 1 and dif.startswith("+"))
+        or (idx == 2 and dif.startswith("-"))
+        or (idx in (3, 4) and dif.startswith("+"))
+    )
+    classe_pilula = "pilula-alerta" if eh_alerta else "pilula-neutra"
+    seta = "↓" if dif.startswith("-") else ("↑" if dif.startswith("+") else "→")
+    w_antes, w_depois = _barras_comparacao(card["antes"], card["depois"])
     return (
         '<div class="fb-card-clima">'
-        f'<div class="fb-card-topo"><span class="fb-icone-clima">{ic}</span>'
+        f'<div class="fb-card-topo"><span class="fb-icone-clima">{svg}</span>'
         f'<span class="fb-card-rotulo">{escape(card["titulo"])}</span></div>'
         f'<div class="fb-card-valor">{escape(card["depois"])}</div>'
         '<div class="fb-card-comparacao">'
         '<div class="fb-linha-periodo">'
-        '<span>1995–2009</span>'
+        '<span>Antes</span>'
+        '<div class="fb-trilho-mini">'
+        f'<div class="fb-preenchimento-antes" style="width:{w_antes}%"></div>'
+        "</div>"
         f'<strong>{escape(card["antes"])}</strong>'
         "</div>"
         '<div class="fb-linha-periodo fb-periodo-atual">'
-        '<span>2010–2025</span>'
+        '<span>Agora</span>'
+        '<div class="fb-trilho-mini">'
+        f'<div class="fb-preenchimento-agora" style="width:{w_depois}%"></div>'
+        "</div>"
         f'<strong>{escape(card["depois"])}</strong>'
         "</div>"
         "</div>"
-        f'<div class="fb-pilula-dif {classe_pilula}">Δ {dif}</div>'
+        f'<div class="fb-pilula-dif {classe_pilula}">{seta} {dif}</div>'
         "</div>"
     )
 
@@ -141,7 +231,7 @@ def _renderizar_aba_clima(
     if resumo:
         st.html(
             '<div class="fb-manchete-clima">'
-            '<span class="fb-manchete-icone">🌦️</span>'
+            f'<span class="fb-manchete-icone">{_SVGS["calendario"]}</span>'
             f'<div><span class="fb-manchete-tag">{escape(t("aba_clima", idioma))}</span>'
             f"<h2>{escape(str(resumo))}</h2></div></div>"
         )
@@ -171,13 +261,13 @@ def _renderizar_aba_clima(
         st.html(
             '<div class="fb-cabecalho-grafico">'
             '<div class="fb-grafico-titulo">'
-            '<span class="fb-icone-agua">💧</span>'
-            '<div><strong>Histórico anual de chuvas (1995–2025)</strong>'
-            '<p>Comparação barra a barra entre o período anterior e o atual</p></div>'
+            f'<span class="fb-icone-agua">{_SVGS["chuva"]}</span>'
+            '<div><strong>Quanto choveu em cada ano (1995–2025)</strong>'
+            '<p>Cada barra mostra o volume acumulado de chuva (mm) no ano</p></div>'
             "</div>"
             '<div class="fb-legenda-grafico">'
-            '<span><i class="cor-antes"></i>1995–2009</span>'
-            '<span><i class="cor-depois"></i>2010–2025</span>'
+            '<span><i class="cor-antes"></i>Antes · 1995–2009</span>'
+            '<span><i class="cor-depois"></i>Agora · 2010–2025</span>'
             "</div></div>"
         )
         st.bar_chart(df, x="ano", y="chuva_mm", color="periodo")
@@ -206,10 +296,11 @@ def _html_card_ranking(card: dict[str, Any], idx: int) -> str:
     return (
         f'<div class="{classe_card}">'
         '<div class="fb-cultura-cabecalho">'
-        f'<div class="fb-cultura-titulo">{selo_pos}'
-        f'<h3>🌾 {escape(card["titulo"].capitalize())}</h3></div>'
+        f'<div class="fb-cultura-titulo"><span class="fb-icone-cultura">{_SVGS["broto"]}</span>'
+        f"{selo_pos}"
+        f'<h3>{escape(card["titulo"].capitalize())}</h3></div>'
         '<div class="fb-nota-bloco">'
-        '<span class="fb-nota-rotulo">Adequação</span>'
+        '<span class="fb-nota-rotulo">Nota geral</span>'
         f'<strong class="fb-nota-numero">{nota:.0f}<span>/100</span></strong>'
         "</div></div>"
         '<div class="fb-barra-fundo">'
@@ -217,17 +308,17 @@ def _html_card_ranking(card: dict[str, Any], idx: int) -> str:
         "</div>"
         '<div class="fb-grade-atributos">'
         '<div class="fb-atributo">'
-        '<span class="fb-attr-rotulo">🛡️ Risco climático</span>'
+        f'<span class="fb-attr-rotulo">{_SVGS["escudo"]} Risco climático</span>'
         f'<strong>{escape(card["risco_txt"])}</strong>'
         f'<small>{escape(card["anos_quebra"])} safras com perda</small>'
         "</div>"
         '<div class="fb-atributo">'
-        '<span class="fb-attr-rotulo">🌱 Saúde do solo</span>'
+        f'<span class="fb-attr-rotulo">{_SVGS["broto"]} Saúde do solo</span>'
         f"<strong>Solo: {escape(solo_txt)}</strong>"
         f"{_pontos_nivel(solo)}"
         "</div>"
         '<div class="fb-atributo">'
-        '<span class="fb-attr-rotulo">💰 Retorno estimado</span>'
+        f'<span class="fb-attr-rotulo">{_SVGS["moeda"]} Retorno estimado</span>'
         f'<strong>{escape(card["retorno_txt"])}</strong>'
         "<small>Estimativa regional</small>"
         "</div>"
@@ -325,7 +416,7 @@ def _html_card_plano(card: dict[str, Any]) -> str:
     )
     passos = "".join(
         f'<div class="fb-passo-safra"><small>Safra {i}</small>'
-        f"<strong>🌿 {escape(c.capitalize())}</strong></div>"
+        f"<strong>{escape(c.capitalize())}</strong></div>"
         + ('<span class="fb-seta-safra">→</span>' if i < len(card["culturas"]) else "")
         for i, c in enumerate(card["culturas"], start=1)
     )
@@ -344,11 +435,11 @@ def _html_card_plano(card: dict[str, Any]) -> str:
         "</div></div>"
         f'<div class="fb-trilha-rotacao">{passos}</div>'
         '<div class="fb-grade-atributos">'
-        f'<div class="fb-atributo"><span class="fb-attr-rotulo">🛡️ Risco médio</span>'
+        f'<div class="fb-atributo"><span class="fb-attr-rotulo">{_SVGS["escudo"]} Risco médio</span>'
         f'<strong>{escape(card["risco_txt"])}</strong></div>'
-        f'<div class="fb-atributo"><span class="fb-attr-rotulo">🌱 Efeito no solo</span>'
+        f'<div class="fb-atributo"><span class="fb-attr-rotulo">{_SVGS["broto"]} Efeito no solo</span>'
         f"<strong>Solo: {escape(solo_txt)}</strong></div>"
-        f'<div class="fb-atributo"><span class="fb-attr-rotulo">💰 Retorno anual</span>'
+        f'<div class="fb-atributo"><span class="fb-attr-rotulo">{_SVGS["moeda"]} Retorno anual</span>'
         f'<strong>{escape(card["retorno_txt"])}</strong></div>'
         "</div>"
         f"{explicacao_html}"
@@ -476,7 +567,7 @@ def exibir_mapa(idioma: str, servico: Servico | None = None) -> None:
         and callable(getattr(servico, "db_disponivel", None))
         and servico.db_disponivel()
     )
-    mapa = mapa_mundi(idioma)
+    mapa = mapa_mundi()
     if tem_db and servico is not None:
         for m in marcadores(servico.observacoes()):
             folium.Marker(
@@ -535,7 +626,8 @@ def main() -> None:
     ocultar_mapa_css = (
         ".st-key-cartao-local > div:not(:has([data-testid='stAlert'])) "
         "{ display: none !important; } "
-        ".st-key-cartao-local { margin-bottom: 0 !important; padding: 14px 20px !important; }"
+        ".st-key-cartao-local { margin-bottom: 0 !important; padding: 14px 20px !important; } "
+        ".st-key-painel-resultados [data-baseweb='tab-list'] { display: none !important; }"
         if motor_completo and etapa_ativa > 1
         else ""
     )
@@ -626,7 +718,9 @@ def main() -> None:
                 ]
 
             abas_ui = st.tabs([rotulo for _, rotulo in ordem_abas])
-            mapa_abas = dict(zip([id_aba for id_aba, _ in ordem_abas], abas_ui, strict=False))
+            mapa_abas = dict(
+                zip([id_aba for id_aba, _ in ordem_abas], abas_ui, strict=False)
+            )
 
             with mapa_abas["clima"]:
                 _renderizar_aba_clima(servico, lat, lon, idioma)
@@ -638,6 +732,24 @@ def main() -> None:
                 )
             _renderizar_por_que_confiar(ctx, idioma)
 
+            if etapa_ativa in (1, 2):
+                st.button(
+                    t("aba_plantar", idioma),
+                    key="avancar-plantar",
+                    width="stretch",
+                    type="primary",
+                    on_click=ir_para_etapa,
+                    args=(3,),
+                )
+            elif etapa_ativa == 3:
+                st.button(
+                    t("aba_planos", idioma),
+                    key="avancar-planos",
+                    width="stretch",
+                    type="primary",
+                    on_click=ir_para_etapa,
+                    args=(4,),
+                )
 
 
 if __name__ == "__main__":

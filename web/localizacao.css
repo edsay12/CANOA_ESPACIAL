@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Archivo:wght@700&family=Inter:wght@400;600;700&display=swap");
 
 :root {
+    color-scheme: light;
     --fundo: #f6f2e9;
     --superficie: #fff;
     --superficie-2: #fbf8f1;
@@ -11,6 +12,52 @@
     --verde-claro: #e3efe6;
     --agua: #deecf3;
     --margem: 32px;
+}
+
+/* Blindagem contra Dark Mode do navegador/sistema nos menus suspensos e inputs */
+[data-baseweb="popover"],
+[data-baseweb="popover"] > div,
+[data-baseweb="menu"],
+ul[data-testid="stSelectboxVirtualDropdown"],
+[role="listbox"] {
+    background: #ffffff !important;
+    color: var(--tinta) !important;
+    border: 1px solid var(--linha) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 10px 28px rgba(30, 42, 35, 0.12) !important;
+}
+[role="option"],
+[data-baseweb="menu"] li {
+    background: #ffffff !important;
+    color: var(--tinta) !important;
+    font-family: Inter, Arial, sans-serif !important;
+    font-weight: 500 !important;
+}
+[role="option"]:hover,
+[role="option"][aria-selected="true"],
+[data-baseweb="menu"] li:hover {
+    background: var(--verde-claro) !important;
+    color: var(--verde) !important;
+    font-weight: 600 !important;
+}
+
+:is(.st-key-btn_atualizar_fotos, .st-key-btn_telegram) button {
+    margin-top: 10px !important;
+    min-height: 46px !important;
+    padding: 8px 18px !important;
+    background: #ffffff !important;
+    border: 2px solid var(--verde) !important;
+    border-radius: 14px !important;
+    color: var(--verde) !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+}
+:is(.st-key-btn_atualizar_fotos, .st-key-btn_telegram) button p {
+    color: var(--verde) !important;
+    font-weight: 600 !important;
+}
+:is(.st-key-btn_atualizar_fotos, .st-key-btn_telegram) button:hover {
+    background: var(--verde-claro) !important;
 }
 
 [data-testid="stHeader"], [data-testid="stToolbar"] { display: none; }
@@ -477,12 +524,30 @@
     font-size: 13px;
 }
 .fb-linha-periodo {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 46px 1fr auto;
+    align-items: center;
+    gap: 8px;
     color: var(--tinta-suave);
 }
 .fb-periodo-atual {
     color: var(--tinta);
+}
+.fb-trilho-mini {
+    height: 8px;
+    background: #ece5d5;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.fb-preenchimento-antes {
+    height: 100%;
+    background: #6d94b0;
+    border-radius: 999px;
+}
+.fb-preenchimento-agora {
+    height: 100%;
+    background: #b87324;
+    border-radius: 999px;
 }
 .fb-pilula-dif {
     display: inline-flex;
@@ -758,6 +823,54 @@
     background: var(--superficie-2);
     border: 1px solid var(--linha);
     border-radius: 16px;
+}
+.st-key-painel-resultados [data-baseweb="input"],
+.st-key-painel-resultados [data-baseweb="base-input"],
+.st-key-painel-resultados [data-baseweb="select"] > div {
+    background: #ffffff !important;
+    color: var(--tinta) !important;
+    border: 1px solid var(--linha) !important;
+    border-radius: 12px !important;
+}
+.st-key-painel-resultados input {
+    color: var(--tinta) !important;
+}
+.fb-icone-cultura {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--verde-claro);
+}
+.fb-attr-rotulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+:is(.st-key-avancar-plantar, .st-key-avancar-planos) button {
+    display: flex !important;
+    gap: 14px !important;
+    margin-top: 16px !important;
+    min-height: 62px !important;
+    border: 0 !important;
+    border-radius: 16px !important;
+    padding: 12px 24px !important;
+    background: var(--verde) !important;
+    color: white !important;
+    cursor: pointer !important;
+}
+:is(.st-key-avancar-plantar, .st-key-avancar-planos) button p {
+    font-family: Archivo, Arial, sans-serif !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: white !important;
+}
+:is(.st-key-avancar-plantar, .st-key-avancar-planos) button::after {
+    content: "";
+    width: 24px;
+    height: 24px;
+    background: var(--arrow) center no-repeat;
 }
 
 
