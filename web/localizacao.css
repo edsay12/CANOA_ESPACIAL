@@ -122,6 +122,65 @@
 }
 .etapas li[aria-current="step"] span { background: var(--verde); color: white; }
 
+.st-key-trilha-etapas {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.04fr) repeat(3, minmax(0, 1fr));
+    gap: 8px !important;
+    padding: 10px var(--margem) !important;
+    background: white;
+    border-bottom: 1px solid var(--linha);
+}
+.st-key-trilha-etapas button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 11px !important;
+    min-height: 60px !important;
+    padding: 11px 13px !important;
+    border: 2px solid transparent !important;
+    border-radius: 14px !important;
+    background: var(--superficie-2) !important;
+    color: var(--tinta) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease;
+}
+.st-key-trilha-etapas button:hover {
+    border-color: var(--verde) !important;
+}
+.st-key-trilha-etapas button[kind="primary"] {
+    background: var(--verde-claro) !important;
+    border-color: var(--verde) !important;
+    color: var(--tinta) !important;
+}
+.st-key-trilha-etapas button p {
+    font-family: Inter, Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: var(--tinta) !important;
+    white-space: nowrap;
+}
+.st-key-etapa-1 button::before { content: "1"; }
+.st-key-etapa-2 button::before { content: "2"; }
+.st-key-etapa-3 button::before { content: "3"; }
+.st-key-etapa-4 button::before { content: "4"; }
+.st-key-trilha-etapas button::before {
+    display: grid;
+    place-items: center;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--linha);
+    color: var(--tinta-suave);
+    font-family: Archivo, Arial, sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+}
+.st-key-trilha-etapas button[kind="primary"]::before {
+    background: var(--verde);
+    color: white;
+}
+
 .st-key-cartao-local {
     width: calc(100% - 2 * var(--margem));
     margin: 24px var(--margem) 0;
@@ -199,6 +258,23 @@
 .st-key-exemplos button p { font-size: 17px; font-weight: 600; line-height: 1.4; }
 
 .st-key-ver-clima-mobile { display: none; }
+:is(.st-key-ver-clima-desktop, .st-key-ver-clima-mobile) button:not(:disabled) {
+    display: flex;
+    gap: 14px;
+    min-height: 66px;
+    border: 0;
+    border-radius: 16px;
+    padding: 12px 24px;
+    background: var(--verde);
+    color: white;
+    cursor: pointer;
+}
+:is(.st-key-ver-clima-desktop, .st-key-ver-clima-mobile) button:not(:disabled)::after {
+    content: "";
+    width: 24px;
+    height: 24px;
+    background: var(--arrow) center no-repeat;
+}
 :is(.st-key-ver-clima-desktop, .st-key-ver-clima-mobile) button:disabled {
     display: flex;
     gap: 14px;
@@ -246,49 +322,442 @@
     .st-key-exemplos > div { width: 100%; }
     .st-key-exemplos button { width: 100%; }
     .st-key-painel-resultados { margin-top: 18px; padding: 18px 16px; }
+    .fb-grade-clima, .fb-grade-atributos, .fb-trilha-rotacao {
+        grid-template-columns: 1fr !important;
+        flex-direction: column !important;
+    }
+    .fb-seta-safra { transform: rotate(90deg); }
+}
+
+.st-key-resumo-clima-sr,
+.st-key-metricas-clima-sr,
+[class*="st-key-plano-sr-"] {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .st-key-painel-resultados {
     width: calc(100% - 2 * var(--margem));
     margin: 24px var(--margem) 0;
-    padding: 24px 22px;
-    gap: 20px;
+    padding: 26px 24px;
+    gap: 22px;
     min-width: 0;
     background: white;
     border: 1px solid var(--linha);
     border-radius: 18px;
     font-family: Inter, Arial, sans-serif;
 }
-.st-key-painel-resultados h2, .st-key-painel-resultados h3 {
+.st-key-painel-resultados h2,
+.st-key-painel-resultados h3,
+.fb-card-valor,
+.fb-nota-numero {
     font-family: Archivo, Arial, sans-serif;
     color: var(--tinta);
 }
 .st-key-painel-resultados [data-baseweb="tab-list"] {
     gap: 10px;
-    border-bottom: 2px solid var(--linha);
-    padding-bottom: 8px;
+    border-bottom: 1px solid var(--linha);
+    padding-bottom: 12px;
 }
 .st-key-painel-resultados [data-baseweb="tab"] {
-    border-radius: 12px;
-    padding: 10px 18px;
+    border-radius: 14px;
+    padding: 12px 22px;
     background: var(--superficie-2);
+    border: 2px solid transparent;
     color: var(--tinta);
     font-weight: 600;
     font-size: 16px;
+    transition: all 0.15s ease;
+}
+.st-key-painel-resultados [data-baseweb="tab"]:hover {
+    border-color: var(--linha);
 }
 .st-key-painel-resultados [data-baseweb="tab"][aria-selected="true"] {
+    background: var(--verde-claro);
+    border-color: var(--verde);
+    color: var(--verde);
+    font-weight: 700;
+}
+.st-key-painel-resultados [data-baseweb="tab-highlight"] {
+    display: none;
+}
+
+/* Aba 1: Seu clima mudou */
+.fb-manchete-clima {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+    padding: 18px 22px;
+    background: var(--verde-claro);
+    border: 2px solid var(--verde);
+    border-radius: 16px;
+}
+.fb-manchete-icone {
+    display: grid;
+    place-items: center;
+    flex: 0 0 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: white;
+    font-size: 24px;
+}
+.fb-manchete-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--verde);
+    margin-bottom: 2px;
+}
+.fb-manchete-clima h2 {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.25;
+    color: var(--tinta);
+}
+
+.fb-grade-clima {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+}
+.fb-card-clima {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px;
+    background: var(--superficie-2);
+    border: 1px solid var(--linha);
+    border-radius: 16px;
+}
+.fb-card-topo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.fb-icone-clima {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--agua);
+    font-size: 17px;
+    flex: none;
+}
+.fb-card-rotulo {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tinta-suave);
+    line-height: 1.25;
+}
+.fb-card-valor {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--tinta);
+}
+.fb-card-comparacao {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--linha);
+    font-size: 13px;
+}
+.fb-linha-periodo {
+    display: flex;
+    justify-content: space-between;
+    color: var(--tinta-suave);
+}
+.fb-periodo-atual {
+    color: var(--tinta);
+}
+.fb-pilula-dif {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+}
+.pilula-alerta {
+    background: #fbeae5;
+    border: 1px solid #ecc4b8;
+    color: #9e331e;
+}
+.pilula-neutra {
+    background: var(--verde-claro);
+    border: 1px solid #bdd8c5;
+    color: var(--verde);
+}
+
+.fb-cabecalho-grafico {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 16px 18px;
+    background: var(--superficie-2);
+    border: 1px solid var(--linha);
+    border-radius: 16px 16px 0 0;
+}
+.fb-grafico-titulo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.fb-icone-agua {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--agua);
+    font-size: 20px;
+}
+.fb-grafico-titulo strong {
+    display: block;
+    font-size: 17px;
+    color: var(--tinta);
+}
+.fb-grafico-titulo p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--tinta-suave);
+}
+.fb-legenda-grafico {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tinta-suave);
+}
+.fb-legenda-grafico span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.fb-legenda-grafico i {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+.cor-antes { background: #6d94b0; }
+.cor-depois { background: #b87324; }
+
+/* Aba 2 e 3: Controles e Cartões de Culturas e Planos */
+.st-key-controles-plantar,
+.st-key-controles-planos {
+    padding: 18px 20px;
+    margin-top: 8px;
+    background: var(--superficie-2);
+    border: 1px solid var(--linha);
+    border-radius: 16px;
+}
+
+.fb-card-cultura,
+.fb-card-plano {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 14px;
+    padding: 20px 22px;
+    background: white;
+    border: 1px solid var(--linha);
+    border-radius: 18px;
+}
+.fb-cultura-destaque,
+.fb-plano-sugerido {
+    border: 2px solid var(--verde);
+    background: #fcfdfb;
+}
+.fb-plano-atual {
+    border: 2px solid #d49b35;
+    background: #fffdf7;
+}
+.fb-cultura-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.fb-cultura-titulo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.fb-cultura-titulo h3 {
+    margin: 0;
+    font-size: 23px;
+    line-height: 1.2;
+}
+.fb-selo-topo {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    background: var(--superficie-2);
+    border: 1px solid var(--linha);
+    color: var(--tinta-suave);
+}
+.fb-selo-ouro {
     background: var(--verde);
+    border-color: var(--verde);
     color: white;
 }
-.st-key-painel-resultados [data-testid="stMetric"] {
+.fb-selo-ambar {
+    background: #fef3c7;
+    border-color: #d49b35;
+    color: #92580a;
+}
+.fb-nota-bloco {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 12px;
+    background: var(--verde-claro);
+}
+.fb-nota-rotulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tinta-suave);
+}
+.fb-nota-numero {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--verde);
+}
+.fb-nota-numero span {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tinta-suave);
+}
+.fb-barra-fundo {
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--verde-claro);
+    overflow: hidden;
+}
+.fb-barra-preenchimento {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--verde);
+}
+.fb-grade-atributos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+.fb-atributo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
     background: var(--superficie-2);
     border: 1px solid var(--linha);
     border-radius: 14px;
+}
+.fb-attr-rotulo {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tinta-suave);
+}
+.fb-atributo strong {
+    font-size: 16px;
+    color: var(--tinta);
+}
+.fb-atributo small {
+    font-size: 12px;
+    color: var(--tinta-suave);
+}
+.fileira-pontos {
+    display: inline-flex;
+    gap: 5px;
+    margin-top: 2px;
+}
+.ponto-indicador {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--linha);
+}
+.ponto-indicador.ponto-ok {
+    background: var(--verde);
+}
+.ponto-indicador.ponto-alerta {
+    background: #c84b31;
+}
+.fb-explicacao-cultura {
+    padding: 12px 16px;
+    background: var(--superficie-2);
+    border-left: 4px solid var(--verde);
+    border-radius: 8px 12px 12px 8px;
+    font-size: 15px;
+    color: var(--tinta);
+    line-height: 1.45;
+}
+.fb-trilha-rotacao {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     padding: 14px 16px;
-}
-.st-key-painel-resultados [data-testid="stExpander"] {
     background: var(--superficie-2);
     border: 1px solid var(--linha);
     border-radius: 14px;
 }
+.fb-passo-safra {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    background: white;
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+}
+.fb-passo-safra small {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tinta-suave);
+}
+.fb-passo-safra strong {
+    font-size: 17px;
+    color: var(--tinta);
+}
+.fb-seta-safra {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--verde);
+}
+
+.st-key-painel-resultados [data-testid="stExpander"] {
+    margin-top: 16px;
+    background: var(--superficie-2);
+    border: 1px solid var(--linha);
+    border-radius: 16px;
+}
+
 
