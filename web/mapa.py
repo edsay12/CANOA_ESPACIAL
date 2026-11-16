@@ -5,7 +5,8 @@ from functools import cache
 from pathlib import Path
 
 import folium
-from branca.element import MacroElement, Template
+from folium.plugins import Geocoder
+from folium.template import Template
 
 from web.pontos import normalizar
 
@@ -18,60 +19,45 @@ def imagem(nome: str) -> str:
     return f"data:image/svg+xml;base64,{dados}"
 
 
-class ArteMapa(MacroElement):
+class Busca(Geocoder):
+    """Busca por nome de lugar; escolher um resultado seleciona o ponto como um clique."""
+
     _template = Template("""
         {% macro script(this, kwargs) %}
-        const mapa = {{ this._parent.get_name() }};
-        const limites = [[-90, -180], [90, 180]];
-        const desktop = {{ this.desktop | tojson }};
-        const mobile = {{ this.mobile | tojson }};
-        const arte = L.imageOverlay(desktop, limites).addTo(mapa);
-        const elemento = mapa.getContainer();
-        const estilos = document.createElement("style");
-        estilos.textContent = "#map_div.farmbits-compacto {height: 238px !important;}";
-        document.head.append(estilos);
-        const enquadrar = () => {
-            const largura = elemento.clientWidth;
-            if (!largura) return;
-            const compacto = largura < 600;
-            elemento.classList.toggle("farmbits-compacto", compacto);
-            elemento.style.background = "#deecf3";
-            elemento.style.cursor = "crosshair";
-            arte.setUrl(compacto ? mobile : desktop);
-            mapa.invalidateSize({pan: false});
-            const zoom = Math.log2(largura / (2 * mapa.options.crs.scale(0)));
-            mapa.setMinZoom(zoom);
-            mapa.setView([0, 0], zoom, {animate: false});
-        };
-        let larguraAnterior;
-        new ResizeObserver(() => {
-            if (larguraAnterior === elemento.clientWidth) return;
-            larguraAnterior = elemento.clientWidth;
-            enquadrar();
-        }).observe(elemento);
-        enquadrar();
+            var opcoes = {{ this.options|tojavascript }};
+            opcoes["geocoder"] = L.Control.Geocoder[opcoes["provider"]](opcoes["providerOptions"]);
+            L.Control.geocoder(opcoes).on("markgeocode", function(e) {
+                var mapa = {{ this._parent.get_name() }};
+                mapa.setView(e.geocode.center, opcoes["zoom"] || mapa.getZoom());
+                mapa.fire("click", {latlng: e.geocode.center});
+            }).addTo({{ this._parent.get_name() }});
         {% endmacro %}
     """)
 
-    def __init__(self):
-        super().__init__()
-        self.desktop = imagem("world-desktop")
-        self.mobile = imagem("world-mobile")
 
-
-def mapa_mundi() -> folium.Map:
+def mapa_mundi(idioma: str = "pt") -> folium.Map:
     mapa = folium.Map(
-        location=(0, 0),
-        crs="EPSG4326",
-        tiles=None,
-        zoom_start=0,
-        zoom_snap=0,
-        zoom_control=False,
-        scroll_wheel_zoom=False,
-        attribution_control=False,
+        location=(10, 0),
+        tiles="OpenStreetMap",
+        zoom_start=2,
+        min_zoom=2,
         max_bounds=True,
+        world_copy_jump=True,
+        scroll_wheel_zoom=False,  # não prende a rolagem da página; zoom pelos botões, duplo clique ou pinça
     )
-    ArteMapa().add_to(mapa)
+    Busca(
+        collapsed=False, position="topright", add_marker=False, zoom=9,
+        provider_options={"geocodingQueryParams": {"accept-language": idioma}},
+        placeholder={"pt": "Buscar cidade ou lugar", "en": "Search a city or place",
+                     "es": "Buscar ciudad o lugar"}.get(idioma, "Buscar"),
+        error_message={"pt": "Nada encontrado", "en": "Nothing found",
+                      "es": "Nada encontrado"}.get(idioma, ""),
+    ).add_to(mapa)
+    # tons suaves para combinar com a paleta do site; os dados continuam os do OpenStreetMap
+    mapa.get_root().header.add_child(folium.Element(
+        "<style>.leaflet-tile-pane{filter:saturate(.45) sepia(.12) brightness(1.04);}"
+        ".leaflet-container{background:#deecf3;cursor:crosshair;}</style>"
+    ))
     return mapa
 
 

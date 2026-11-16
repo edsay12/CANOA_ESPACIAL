@@ -12,3 +12,12 @@ def test_mapa_so_tem_o_marcador_selecionado():
     substituto = marcador((42.03, -93.62))
     assert atual.get_bounds() == [[-17.8, -50.92], [-17.8, -50.92]]
     assert substituto.get_bounds() == [[42.03, -93.62], [42.03, -93.62]]
+
+
+def test_mapa_real_com_busca_que_seleciona_o_ponto():
+    from web.mapa import mapa_mundi
+
+    html = mapa_mundi("en").get_root().render()
+    assert "tile.openstreetmap.org" in html
+    assert "Search a city or place" in html
+    assert 'mapa.fire("click", {latlng: e.geocode.center})' in html

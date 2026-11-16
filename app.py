@@ -454,7 +454,7 @@ def exibir_mapa(idioma: str, servico: Servico | None = None) -> None:
         and callable(getattr(servico, "db_disponivel", None))
         and servico.db_disponivel()
     )
-    mapa = mapa_mundi()
+    mapa = mapa_mundi(idioma)
     if tem_db and servico is not None:
         for m in marcadores(servico.observacoes()):
             folium.Marker(
