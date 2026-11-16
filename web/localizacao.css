@@ -88,7 +88,27 @@ ul[data-testid="stSelectboxVirtualDropdown"],
     display: flex;
     align-items: center;
 }
-.marca { gap: 14px; white-space: nowrap; }
+.marca { gap: 10px; white-space: nowrap; }
+.marca-vaso {
+    display: block;
+    width: auto;
+    height: 50px;
+    image-rendering: pixelated;
+    flex: none;
+}
+.marca-texto {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+}
+.marca-palavra {
+    display: block;
+    width: auto;
+    height: 26px;
+    object-fit: contain;
+    object-position: left center;
+}
 .marca strong { display: block; font-size: 22px; font-weight: 700; line-height: 1.1; }
 .marca .subtitulo { margin: 1px 0 0; font-size: 14px; line-height: 1.4; color: var(--tinta-suave); }
 .logo, .pin {

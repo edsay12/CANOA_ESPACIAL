@@ -94,6 +94,14 @@ def icone(nome: str) -> str:
     return f'<img src="{imagem(nome)}" alt="" width="24" height="24">'
 
 
+_BRAND_DIR = Path(__file__).resolve().parent / "assets" / "brand"
+
+
+def _brand_png_uri(nome: str) -> str:
+    dados = b64encode((_BRAND_DIR / f"{nome}.png").read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{dados}"
+
+
 def texto_responsivo(chave: str, idioma: str) -> str:
     desktop = escape(t(chave, idioma))
     mobile = escape(t(f"{chave}_mobile", idioma))
@@ -524,10 +532,15 @@ def cabecalho(idioma: str, interativo: bool = False) -> None:
         vertical_alignment="center",
         horizontal_alignment="distribute",
     ):
+        icon_uri = _brand_png_uri("farmbits-icon")
+        wordmark_uri = _brand_png_uri("farmbits-wordmark")
         st.html(
-            f'<div class="marca"><span class="logo">{icone("logo")}</span>'
-            "<div><strong>FARMBITS</strong>"
-            f'<p class="subtitulo">{escape(t("subtitulo_marca", idioma))}</p></div></div>',
+            '<div class="marca">'
+            f'<img class="marca-vaso" src="{icon_uri}" alt="" width="40" height="53">'
+            '<div class="marca-texto">'
+            f'<img class="marca-palavra" src="{wordmark_uri}" alt="FARMBits" height="28">'
+            f'<p class="subtitulo">{escape(t("subtitulo_marca", idioma))}</p>'
+            "</div></div>",
             width="content",
         )
         st.selectbox(
@@ -601,7 +614,11 @@ def exibir_mapa(idioma: str, servico: Servico | None = None) -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="FARMBITS", page_icon="🌱", layout="wide")
+    st.set_page_config(
+        page_title="FARMBits",
+        page_icon=str(_BRAND_DIR / "farmbits-favicon.png"),
+        layout="wide",
+    )
     st.session_state.setdefault("ponto", None)
     st.session_state.setdefault("ultimo_clique", None)
     st.session_state.setdefault("versao_mapa", 0)
