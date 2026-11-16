@@ -69,6 +69,7 @@ def test_falha_usa_padrao(pasta_cache, monkeypatch):
     padrao = {"cad_mm": 100, "argila_pct": None, "areia_pct": None, "fonte": "padrão"}
     nulos = resposta_soilgrids({k: None for k in solo.CAMADAS}, {k: None for k in solo.CAMADAS})
     for falha in [requests.Timeout("lento"), requests.ConnectionError("fora"), Resposta({}, status=500), Resposta(nulos)]:
+        solo._falhas.clear()
         chamadas = rede(monkeypatch, falha)
         assert solo.agua_disponivel(-0.3, 36.07) == padrao
         assert chamadas[0]["timeout"] == 10  # demora > 10 s conta como falha
@@ -87,3 +88,15 @@ def test_log_requisicoes_power_e_solo(pasta_cache, monkeypatch, caplog):
         assert len(linhas) == 1, msgs
         assert "-17.80" in linhas[0] and "-50.92" in linhas[0]
         assert re.search(r"\d+\.\d+ s", linhas[0])
+
+
+def test_falha_recente_nao_espera_de_novo(pasta_cache, monkeypatch):
+    solo._falhas.clear()
+    chamadas = rede(monkeypatch, requests.Timeout("lento"))
+    assert solo.agua_disponivel(-0.3, 36.07)["fonte"] == "padrão"
+    assert solo.agua_disponivel(-0.3, 36.07)["fonte"] == "padrão"
+    assert len(chamadas) == 1  # a segunda consulta não espera o SoilGrids de novo
+    relogio = solo.time.monotonic() + solo.ESPERA_FALHA_S + 1
+    monkeypatch.setattr(solo.time, "monotonic", lambda: relogio)
+    solo.agua_disponivel(-0.3, 36.07)
+    assert len(chamadas) == 2  # passada a espera, tenta de novo

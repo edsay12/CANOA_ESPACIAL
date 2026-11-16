@@ -1,6 +1,8 @@
 """Tela pública de localização e abas do FARMBITS."""
 
+import logging
 import os
+import threading
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -53,6 +55,26 @@ def ir_para_etapa(indice: int) -> None:
         st.session_state.ultimo_clique = None
         st.session_state.versao_mapa = st.session_state.get("versao_mapa", 0) + 1
 
+
+
+@st.cache_resource
+def _preaquecer_demo() -> None:
+    """Calcula os 4 pontos da demo em segundo plano quando o site sobe, uma vez por processo."""
+    if "PYTEST_CURRENT_TEST" in os.environ:  # nos testes o motor é falso e não deve tocar a rede
+        return
+
+    def rodar() -> None:
+        from core import clima, contexto, modelo
+
+        for lat, lon in DEMO.values():
+            try:
+                contexto.contexto(lat, lon)
+                clima.clima_mudou(lat, lon)
+                modelo.ranking_safra(lat, lon, "03-01")  # data padrão da aba O que plantar
+            except Exception:  # pré-cálculo é só aceleração: falhar aqui não pode derrubar o site
+                logging.getLogger(__name__).exception("pré-cálculo de (%s, %s) falhou", lat, lon)
+
+    threading.Thread(target=rodar, name="preaquecer-demo", daemon=True).start()
 
 
 def _obter_servico() -> Servico:
@@ -493,6 +515,7 @@ def main() -> None:
     st.session_state.setdefault("ultimo_clique", None)
     st.session_state.setdefault("versao_mapa", 0)
     st.session_state.setdefault("contextos", {})
+    _preaquecer_demo()
     st.session_state.setdefault("etapa_ativa", 1)
 
     servico = _obter_servico()

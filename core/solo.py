@@ -14,8 +14,10 @@ TIMEOUT_S = 10  # MOT-10: SoilGrids fora não pode travar o site
 URL = "https://rest.isric.org/soilgrids/v2.0/properties/query"
 CAMADAS = {"0-5cm": 5, "5-15cm": 10, "15-30cm": 15}
 PADRAO = {"cad_mm": 100, "argila_pct": None, "areia_pct": None, "fonte": "padrão"}
+ESPERA_FALHA_S = 900  # depois de uma falha, o mesmo ponto usa o padrão por 15 min em vez de esperar o timeout de novo
 MO_PCT = 2.5  # shortcut: matéria orgânica fixa; usar a camada soc do SoilGrids se a precisão do solo importar
 log = logging.getLogger(__name__)
+_falhas = {}  # arquivo de cache do ponto -> instante (monotonic) da última falha
 
 
 def _cad_mm(areia_pct, argila_pct):
@@ -56,8 +58,12 @@ def agua_disponivel(lat, lon):
     path = cache.caminho("solo", lat, lon)
     dados = cache.ler(path)
     if dados is None:
+        if time.monotonic() - _falhas.get(path, -ESPERA_FALHA_S) < ESPERA_FALHA_S:
+            return dict(PADRAO)
         dados = _baixar(lat, lon)
         if dados is None:
+            _falhas[path] = time.monotonic()
             return dict(PADRAO)
+        _falhas.pop(path, None)
         cache.gravar(path, dados)
     return dados

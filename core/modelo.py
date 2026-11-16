@@ -19,9 +19,18 @@ JANELAS = range(ANOS[0], ANOS[-1] - 1)  # 1995–2022: cada janela cobre 3 anos 
 SEMEADURA_SEM_ESTACAO = {"N": "05-01", "S": "11-01"}
 
 
+_memo_perdas = {}  # shortcut: cresce sem limite enquanto o processo vive; trocar por LRU se o site atender milhares de pontos
+
+
 def _perdas(serie, c, cad_mm, lat, mes, dia):
-    """Ano de semeadura -> perda estimada, uma simulação por ano de 1995 a 2024."""
-    return {a: balanco.simular_safra(serie, c, cad_mm, pd.Timestamp(a, mes, dia), lat)["perda"] for a in ANOS}
+    """Ano de semeadura -> perda estimada, uma simulação por ano de 1995 a 2024.
+
+    A simulação é a parte cara do ranking e não depende das prioridades: fica memorizada por série, cultura, solo e data.
+    """
+    chave = (int(pd.util.hash_pandas_object(serie, index=False).sum()), repr(sorted(c.items())), cad_mm, lat, mes, dia)
+    if chave not in _memo_perdas:
+        _memo_perdas[chave] = {a: balanco.simular_safra(serie, c, cad_mm, pd.Timestamp(a, mes, dia), lat)["perda"] for a in ANOS}
+    return dict(_memo_perdas[chave])
 
 
 def _retorno(ctx, nome, perda_media):
