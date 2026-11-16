@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import base64
+import html
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
+from core.erros import ErroFonteDados, ErroPontoInvalido
 from web.i18n import t
 
 _LIMITE_PERIODO_ANTERIOR = 2009
@@ -220,6 +224,7 @@ def prioridades_vazias(
     """Retorna True quando todas as prioridades estao zeradas (SITE-20)."""
     return float(retorno) <= 0 and float(seguranca) <= 0 and float(solo) <= 0
 
+
 def cards_planos(
     resultado: dict[str, Any], idioma: str = "pt"
 ) -> list[dict[str, Any]]:
@@ -267,3 +272,72 @@ def cards_planos(
             }
         )
     return cards
+
+
+_SELOS = {
+    "municipal": "selo_municipal",
+    "pais": "selo_pais",
+    "clima": "selo_clima",
+}
+
+
+def selo(nivel: str | None, idioma: str = "pt") -> str:
+    """Traduz o nivel de precisao retornado por contexto() (SITE-05)."""
+    chave = _SELOS.get(str(nivel or ""), "selo_clima")
+    return t(chave, idioma)
+
+
+def mensagem_erro(exc: Exception, idioma: str = "pt") -> str:
+    """Converte excecoes do motor em mensagens amigaveis (SITE-07, SITE-08)."""
+    if isinstance(exc, ErroPontoInvalido):
+        return t("erro_ponto", idioma)
+    if isinstance(exc, ErroFonteDados):
+        return t("erro_fonte", idioma)
+    return str(exc)
+
+
+def _miniatura_html(caminho: str | None) -> str:
+    if not caminho:
+        return ""
+    arquivo = Path(str(caminho))
+    if not arquivo.is_file():
+        return ""
+    ext = arquivo.suffix.lower().lstrip(".") or "jpeg"
+    if ext == "jpg":
+        ext = "jpeg"
+    dados_b64 = base64.b64encode(arquivo.read_bytes()).decode("ascii")
+    return (
+        f'<img src="data:image/{ext};base64,{dados_b64}" '
+        'style="max-width:180px;max-height:140px;border-radius:6px;margin-top:6px;" />'
+    )
+
+
+def popup(obs: dict[str, Any]) -> str:
+    """Monta o HTML do popup da observacao com data, texto, descricao_ia e foto."""
+    data_obs = html.escape(str(obs.get("data") or obs.get("criado_em") or ""))
+    texto = html.escape(str(obs.get("texto") or ""))
+    desc_ia = html.escape(str(obs.get("descricao_ia") or ""))
+    foto = _miniatura_html(obs.get("foto_path") or obs.get("foto"))
+    partes = [
+        f"<strong>{data_obs}</strong>" if data_obs else "",
+        f"<p style='margin:4px 0'>{texto}</p>" if texto else "",
+        f"<p style='margin:4px 0;color:#555'>{desc_ia}</p>" if desc_ia else "",
+        foto,
+    ]
+    return "".join(p for p in partes if p)
+
+
+def marcadores(observacoes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Prepara os marcadores de observacoes de campo para o mapa (SITE-32)."""
+    saida: list[dict[str, Any]] = []
+    for obs in observacoes:
+        if obs.get("lat") is None or obs.get("lon") is None:
+            continue
+        saida.append(
+            {
+                "lat": float(obs["lat"]),
+                "lon": float(obs["lon"]),
+                "popup": popup(obs),
+            }
+        )
+    return saida
